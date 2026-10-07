@@ -6,7 +6,7 @@
 export const ABOUT = {
   badge: "About Us",
   title: "Where Every Journey Begins",
-  sub: "Meet the passionate explorers, guides, and adventure enthusiasts creating unforgettable hiking experiences.",
+  sub: "Meet the passionate explorers, guides, and adventure enthusiasts creating unforgettable travel experiences.",
   banner: "/img/eletD2JNrNULFGPfhz7cuyGQ8-dc3b93.png",
   story: {
     badge: "Our Story",
@@ -24,7 +24,7 @@ export const ABOUT = {
     cards: [
       { title: "Local guides, not scripts", body: "Every route led by someone who's walked it before." },
       { title: "Small groups, real caps", body: "Never more than 8 hikers joining a single guide." },
-      { title: "Chosen routes, not permits", body: "Fewer trails offered, each one picked on purpose." },
+      { title: "Chosen routes, not permits", body: "Fewer routes offered, each one picked on purpose." },
     ],
   },
   guides: {
@@ -82,8 +82,8 @@ export const GALLERY = {
 
 export const JOURNAL_PAGE = {
   badge: "Blog & Travel Guide",
-  title: "Stories, Tips & Trail inspiration",
-  sub: "Explore hiking guides, travel tips, destination highlights, and outdoor stories to inspire your next adventure.",
+  title: "Stories, Tips & Travel inspiration",
+  sub: "Explore travel guides, tips, destination highlights, and outdoor stories to inspire your next adventure.",
   featured: {
     tag: "Trip planning",
     read: "3 min read",

@@ -49,7 +49,7 @@ export const LEGAL = {
       {
         heading: "Liability & Assumption of Risk",
         paragraphs: [
-          "Hiking and trekking, particularly at high altitude or in remote terrain, carries inherent risk — including but not limited to altitude sickness, adverse weather, difficult terrain, and limited access to emergency medical care.",
+          "Our guided tours and treks, particularly at high altitude or in remote terrain, carry inherent risk — including but not limited to altitude sickness, adverse weather, difficult terrain, and limited access to emergency medical care.",
           "By booking a trek with API Touch, you acknowledge and accept these risks. API Touch and its guides will take reasonable care to ensure your safety, but we are not liable for injury, illness, loss, or delay arising from circumstances outside our reasonable control.",
           "We require all travelers to carry valid travel and medical evacuation insurance covering the altitude and activities of their chosen route.",
         ],
@@ -104,8 +104,8 @@ export const LEGAL = {
         paragraphs: [
           "Depending on how you interact with us, we may gather:",
           "Contact details — name, email, phone number, nationality.",
-          "Trip details — the hike you've chosen, travel dates, group size, and any preferences you mention.",
-          "Health notes for the trail — fitness level, dietary needs, or medical conditions you choose to share, so your guide can plan a safer trek at altitude or on remote routes.",
+          "Trip details — the tour you've chosen, travel dates, group size, and any preferences you mention.",
+          "Health notes for the trip — fitness level, dietary needs, or medical conditions you choose to share, so your guide can plan a safer trek at altitude or on remote routes.",
           "Payment details — handled through our payment partners; your full card number never touches our servers.",
           "Messages — anything sent through a contact form, booking inquiry, or email.",
           "Site activity — general browsing data like device type, browser, and approximate location, used to understand how people use the site.",
@@ -117,7 +117,7 @@ export const LEGAL = {
           "Your information helps us:",
           "Confirm and manage your booking.",
           "Arrange the guides, permits, and logistics your route requires.",
-          "Keep you updated on itinerary details or trail conditions.",
+          "Keep you updated on itinerary details or route conditions.",
           "Answer your questions before, during, and after your trip.",
           "Refine our routes, site, and how we communicate with travelers.",
           "Meet legal or tax requirements where applicable.",

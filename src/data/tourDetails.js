@@ -12,7 +12,7 @@ export const TOUR_DETAILS = {
     overview: "Five days through rhododendron forest and river valley to the foot of Annapurna's granite walls.\n\nFive days through Nepal's most accessible high-mountain landscape — rhododendron forest and river valley give way to glacial moraine and the sheer granite walls of the Annapurna Sanctuary.The route climbs steadily from Pokhara's lake-level warmth into alpine air, with nights in mountain lodges along the way. No technical climbing, no special permits beyond the standard trekking pass — just sustained walking and some of the closest big-mountain views anywhere in the world.",
     highlights: [],
     itinerary: [
-      { day: "Day 1", title: "", body: "Drive from Pokhara to the trailhead, trek into rhododendron forest" },
+      { day: "Day 1", title: "", body: "Drive from Pokhara to the start of the route, trek into rhododendron forest" },
       { day: "Day 2", title: "", body: "Climb to Poon Hill for sunrise over the Annapurna range, continue into the valley" },
       { day: "Day 3", title: "", body: "Follow the river through forest and alpine meadow toward the Annapurna Sanctuary" },
       { day: "Day 4", title: "", body: "Reach Annapurna Base Camp, surrounded by peaks over 7,000m; begin descent" },
@@ -21,25 +21,25 @@ export const TOUR_DETAILS = {
     inclusions: ["Expert local guide", "Meals included", "Airport transfers", "Accommodation", "Permits & paperwork", "Insurance coverage"],
     exclusions: [],
   },
-  "black-forest-ridge-trail": {
-    slug: "black-forest-ridge-trail",
+  "black-forest-ridge": {
+    slug: "black-forest-ridge",
     title: "Black Forest Ridge Trail",
     price: "$580 /Per Person",
     chips: ["Easy", "4–8 People", "3 Days", "32 Km"],
     start: "Freiburg, Germany",
     end: "Freiburg, Germany",
-    overview: "Three days through dense pine forest and open ridgeline in Germany's Black Forest, with valley villages along the way.\n\nA loop through one of Europe's most storied forests — dense pine and fir give way to open ridgelines with long valley views, and the trail drops into small villages each evening rather than requiring camping.Well-graded paths and gentle elevation make this an easy add to a trip rather than a dedicated expedition. Cuckoo-clock villages, dark forest, and clear mountain air, all within a short drive of Freiburg.",
+    overview: "Three days through dense pine forest and open ridgeline in Germany's Black Forest, with valley villages along the way.\n\nA loop through one of Europe's most storied forests — dense pine and fir give way to open ridgelines with long valley views, and the route drops into small villages each evening rather than requiring camping.Well-graded paths and gentle elevation make this an easy add to a trip rather than a dedicated expedition. Cuckoo-clock villages, dark forest, and clear mountain air, all within a short drive of Freiburg.",
     highlights: [],
     itinerary: [
       { day: "Day 1", title: "", body: "Freiburg into the forest, ridgeline walking to first valley village" },
-      { day: "Day 2", title: "", body: "Forest and meadow trail along the high ridge, second village overnight" },
+      { day: "Day 2", title: "", body: "Forest and meadow path along the high ridge, second village overnight" },
       { day: "Day 3", title: "", body: "Descend through forest back toward Freiburg, final stretch along the valley floor" }
     ],
     inclusions: ["Expert local guide", "Meals included", "Airport transfers", "Accommodation", "Permits & paperwork", "Insurance coverage"],
     exclusions: [],
   },
-  "cinque-terre-coastal-trail": {
-    slug: "cinque-terre-coastal-trail",
+  "cinque-terre-coast": {
+    slug: "cinque-terre-coast",
     title: "Cinque Terre Coastal Trail",
     price: "$650 /Per Person",
     chips: ["Easy", "4–8 People", "3 Days", "11 Km"],
@@ -55,26 +55,26 @@ export const TOUR_DETAILS = {
     inclusions: ["Expert local guide", "Meals included", "Airport transfers", "Accommodation", "Permits & paperwork", "Insurance coverage"],
     exclusions: [],
   },
-  "inca-trail-to-machu-picchu": {
-    slug: "inca-trail-to-machu-picchu",
+  "inca-tour-machu-picchu": {
+    slug: "inca-tour-machu-picchu",
     title: "Inca Trail to Machu Picchu",
     price: "$950 /Per Person",
     chips: ["Tough", "4–8 People", "4 Days", "43 Km"],
     start: "Cusco, Peru",
     end: "Machu Picchu, Peru",
-    overview: "Four days on the classic stone trail through cloud forest and mountain pass, arriving at Machu Picchu through the Sun Gate at sunrise.\n\nThe original route to Machu Picchu, walked since long before any road existed — stone steps, cloud forest, and Inca ruins along the way, climbing to a high mountain pass before descending into the Sacred Valley.Permits are limited and issued months in advance, so this isn't a spontaneous booking — but it's the only way to arrive at Machu Picchu on foot, through the Sun Gate, as the sun comes up over the ruins.",
+    overview: "Four days on the classic stone route through cloud forest and mountain pass, arriving at Machu Picchu through the Sun Gate at sunrise.\n\nThe original route to Machu Picchu, walked since long before any road existed — stone steps, cloud forest, and Inca ruins along the way, climbing to a high mountain pass before descending into the Sacred Valley.Permits are limited and issued months in advance, so this isn't a spontaneous booking — but it's the only way to arrive at Machu Picchu on foot, through the Sun Gate, as the sun comes up over the ruins.",
     highlights: [],
     itinerary: [
       { day: "Day 1", title: "", body: "Drive from Cusco into the Sacred Valley, trek to first camp" },
-      { day: "Day 2", title: "", body: "Climb to the trail's highest mountain pass, descend to camp" },
+      { day: "Day 2", title: "", body: "Climb to the route's highest mountain pass, descend to camp" },
       { day: "Day 3", title: "", body: "Cloud forest trekking past remote Inca ruins, final camp near Machu Picchu" },
       { day: "Day 4", title: "", body: "Pre-dawn walk to the Sun Gate for sunrise over Machu Picchu, guided tour of the ruins" }
     ],
     inclusions: ["Expert local guide", "Meals included", "Airport transfers", "Accommodation", "Permits & paperwork", "Insurance coverage"],
     exclusions: [],
   },
-  "laugavegur-trail": {
-    slug: "laugavegur-trail",
+  "laugavegur": {
+    slug: "laugavegur",
     title: "Laugavegur Trail",
     price: "$970 /Per Person",
     chips: ["Moderate", "6–8 People", "4 Days", "55 Km"],
@@ -98,10 +98,10 @@ export const TOUR_DETAILS = {
     chips: ["Moderate", "4–8 People", "4 Days", "53.5 Km"],
     start: "Lake Te Anau, New Zealand",
     end: "Milford Sound, New Zealand",
-    overview: "Four days through fjordland rainforest and over an alpine pass, ending at Milford Sound — often called the finest walk in the world.\n\nA point-to-point walk through native rainforest, river valley, and a high alpine pass, finishing at one of the most photographed fjords on Earth. Both ends are boat-access only — there's no road in or out, which keeps the trail uncrowded despite its reputation.Huts are booked out months ahead during the main season. The reward is a single sustained walk-in to Milford Sound rather than a day-trip crowd seeing it from a bus.",
+    overview: "Four days through fjordland rainforest and over an alpine pass, ending at Milford Sound — often called the finest walk in the world.\n\nA point-to-point walk through native rainforest, river valley, and a high alpine pass, finishing at one of the most photographed fjords on Earth. Both ends are boat-access only — there's no road in or out, which keeps the route uncrowded despite its reputation.Huts are booked out months ahead during the main season. The reward is a single sustained walk-in to Milford Sound rather than a day-trip crowd seeing it from a bus.",
     highlights: [],
     itinerary: [
-      { day: "Day 1", title: "", body: "Boat across the lake to the trailhead, short walk through native forest to first hut" },
+      { day: "Day 1", title: "", body: "Boat across the lake to the start of the route, short walk through native forest to first hut" },
       { day: "Day 2", title: "", body: "Valley and forest walking along the river toward the base of the pass" },
       { day: "Day 3", title: "", body: "Climb over the alpine pass, waterfalls on the descent into the next valley" },
       { day: "Day 4", title: "", body: "Final valley walk to Milford Sound, boat departure" }
@@ -119,12 +119,12 @@ export const TOUR_DETAILS = {
     overview: "Six days climbing Africa's highest peak, from rainforest to alpine desert to the summit at sunrise.\n\nA climb through five distinct climate zones on the way to the highest point in Africa — rainforest gives way to moorland, then alpine desert, then glacier and rock near the summit. No technical climbing skills required, just sustained effort and time for the body to adjust to altitude.Summit night starts before midnight, climbing by headlamp to reach the crater rim for sunrise. The descent on the final days is steep and fast after the slow, deliberate pace going up.",
     highlights: [],
     itinerary: [
-      { day: "Day 1", title: "", body: "Moshi to the trailhead, ascend through rainforest to first camp" },
+      { day: "Day 1", title: "", body: "Moshi to the start of the climb, ascend through rainforest to first camp" },
       { day: "Day 2", title: "", body: "Climb through moorland to high camp, expanding views over the plains" },
       { day: "Day 3", title: "", body: "Cross alpine desert, acclimatization day built into the route" },
       { day: "Day 4", title: "", body: "Continue across the high plateau toward the base of the summit route" },
       { day: "Day 5", title: "", body: "Night ascent to the summit at sunrise, long descent to a lower camp" },
-      { day: "Day 6", title: "", body: "Final descent through forest back to the trailhead, drive to Moshi" }
+      { day: "Day 6", title: "", body: "Final descent through forest back to the start, drive to Moshi" }
     ],
     inclusions: ["Expert local guide", "Meals included", "Airport transfers", "Accommodation", "Permits & paperwork", "Insurance coverage"],
     exclusions: [],
@@ -178,13 +178,13 @@ export const TOUR_DETAILS = {
     chips: ["Moderate", "4–8 People", "6 Days", "96 Km"],
     start: "Milngavie, Scotland",
     end: "Fort William, Scotland",
-    overview: "Six days from Glasgow's edge to the foot of Ben Nevis, tracing lochs, glens, and open moorland across the Scottish Highlands.\n\nScotland's original long-distance trail, running from the outskirts of Glasgow to the base of Ben Nevis. The route climbs out of lowland farmland into the wild country around Loch Lomond, then opens onto Rannoch Moor, one of the last true wildernesses in Britain, before the final stretch through Glen Nevis. Waymarked and well-trodden, but the weather changes fast — every day can look different by afternoon.",
+    overview: "Six days from Glasgow's edge to the foot of Ben Nevis, tracing lochs, glens, and open moorland across the Scottish Highlands.\n\nScotland's original long-distance route, running from the outskirts of Glasgow to the base of Ben Nevis. The route climbs out of lowland farmland into the wild country around Loch Lomond, then opens onto Rannoch Moor, one of the last true wildernesses in Britain, before the final stretch through Glen Nevis. Waymarked and well-trodden, but the weather changes fast — every day can look different by afternoon.",
     highlights: [],
     itinerary: [
       { day: "Day 1", title: "", body: "Milngavie to Loch Lomond, gentle farmland and forest track" },
       { day: "Day 2", title: "", body: "Along the loch shore, steep and rocky in places, camp near Inversnaid" },
       { day: "Day 3", title: "", body: "Climb out of the loch valley onto open moorland, camp near Tyndrum" },
-      { day: "Day 4", title: "", body: "Cross Rannoch Moor, the trail's most exposed and remote stretch" },
+      { day: "Day 4", title: "", body: "Cross Rannoch Moor, the route's most exposed and remote stretch" },
       { day: "Day 5", title: "", body: "Descend into Glen Coe, camp below the Devil's Staircase" },
       { day: "Day 6", title: "", body: "Final climb over the Staircase and down into Glen Nevis, finish at Fort William" }
     ],

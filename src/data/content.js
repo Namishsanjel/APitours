@@ -27,7 +27,7 @@ export const CONTACT = {
   badge: "Contact us",
   title: ["Let's plan your", "next adventure"],
   image: IMG.contact,
-  imageAlt: "Misty forest trail background for the AP",
+  imageAlt: "Misty forest route background for the AP",
   info: [
     { label: "Email", value: "email@API Touch.com" },
     { label: "Phone", value: "+1 (970) 555-0148" },
@@ -61,29 +61,29 @@ export const CONTACT = {
 // Per-route document head, mirroring the original pages.
 export const PAGES = {
   "/": {
-    title: "API Touch — Guided Hiking Trips & Outdoor Adventure Travel",
+    title: "API Touch — Guided Tours & Vacations",
     description:
-      "Discover guided hiking trips, scenic mountain trails, curated outdoor adventures, and stress-free trip planning with API Touch.",
+      "Discover guided tours, scenic mountain destinations, curated outdoor adventures, and stress-free holiday planning with API Touch.",
   },
   "/contact": {
-    title: "Contact API Touch — Plan Your Guided Hiking Trip",
+    title: "Contact API Touch — Plan Your Next Vacation",
     description:
-      "Contact API Touch to plan a guided hiking trip, ask about routes, group sizes, dates, and outdoor adventure travel support.",
+      "Contact API Touch to plan a guided tour, ask about routes, group sizes, dates, and outdoor adventure travel support.",
   },
   "/about": {
     title: "About API Touch — Our Story & Guides",
     description:
-      "Learn about API Touch’s approach to guided hiking trips, curated routes, local expertise, and thoughtful outdoor adventure planning.",
+      "Learn about API Touch’s approach to guided tours, curated routes, local expertise, and thoughtful outdoor adventure planning.",
   },
   "/gallery": {
-    title: "Hiking Photo Gallery — API Touch",
+    title: "Travel Photo Gallery — API Touch",
     description:
-      "Explore API Touch’s hiking photo gallery with scenic trails, camps, mountain landscapes, and outdoor adventure moments from guided trips.",
+      "Explore API Touch’s travel photo gallery with scenic routes, camps, mountain landscapes, and outdoor adventure moments from guided trips.",
   },
   "/blog": {
     title: "Blog & Travel Guide, Trip Stories & Tips — API Touch",
     description:
-      "Hiking guides, packing tips, and stories from the road. Inspiration for your next guided expedition.",
+      "Travel guides, packing tips, and stories from the road. Inspiration for your next guided adventure.",
   },
   "/tours": {
     title: "Tours & Packages — API Touch",
@@ -118,7 +118,7 @@ export const PAGES = {
   "/reviews": {
     title: "Reviews — API Touch",
     description:
-      "Customer testimonials and traveller experiences from API Touch tours and guided hiking trips.",
+      "Customer testimonials and traveller experiences from API Touch tours and guided vacations.",
   },
   "/faq": {
     title: "FAQ — API Touch",
@@ -138,18 +138,18 @@ export const NAV_LINKS = [
 ];
 export const HERO = {
   eyebrow: "Global Expeditions · Est. Wild",
-  title: "Go Where the Trail Ends",
+  title: "Go Where the Journey Begins",
   cta: "Find your next tour",
   ctaHref: "/tours",
   sub: "Guided expeditions to wild peaks, hidden coastlines, and forests few ever reach.",
   image: IMG.hero,
-  imageAlt: "Hiker overlooking a mountain trail, repr",
+  imageAlt: "Traveller overlooking a mountain route, repr",
 };
 
 export const ABOUT = {
   badge: "About us",
   title: ["Uncover the", "Stories Hidden in", "Every Landscape"],
-  body: "API Touch is a hiking agency built for people who want to go further. Small groups, expert local guides, and routes most people never find on their own.",
+  body: "API Touch is a tour operator built for people who want to go further. Small groups, expert local guides, and places most people never find on their own.",
   cta: "Our story",
   ctaHref: "/about",
   stats: [
@@ -178,23 +178,23 @@ export const HIKES = [
     title: "Annapurna Base Camp",
     href: "/tours/annapurna-base-camp",
     image: "/img/abc.jpg",
-    alt: "Annapurna Base Camp hiking gallery image showing scenic trai",
+    alt: "Annapurna Base Camp tour photo showing scenic mountain views",
   },
   {
-    slug: "inca-trail-to-machu-picchu",
+    slug: "inca-tour-machu-picchu",
     chips: ["Tough", "4 Days"],
     title: "Inca Trail to Machu Picchu",
-    href: "/tours/inca-trail-to-machu-picchu",
+    href: "/tours/inca-tour-machu-picchu",
     image: "/img/machu-picchu.jpg",
-    alt: "Inca Trail to Machu Picchu guided hiking",
+    alt: "Inca Trail to Machu Picchu guided tour",
   },
   {
-    slug: "cinque-terre-coastal-trail",
+    slug: "cinque-terre-coast",
     chips: ["Easy", "3 Days"],
     title: "Cinque Terre Coastal Trail",
-    href: "/tours/cinque-terre-coastal-trail",
+    href: "/tours/cinque-terre-coast",
     image: "/img/cinque-terre-coastal-trail.jpg",
-    alt: "Cinque Terre Coastal Trail guided hiking",
+    alt: "Cinque Terre Coastal Trail guided tour",
   },
   {
     slug: "mount-kilimanjaro",
@@ -202,7 +202,7 @@ export const HIKES = [
     title: "Mount Kilimanjaro",
     href: "/tours/mount-kilimanjaro",
     image: "/img/mount-kilimanjaro.jpg",
-    alt: "Mount Kilimanjaro guided hiking trip her",
+    alt: "Mount Kilimanjaro guided tour hero image",
   },
 ];
 
@@ -234,9 +234,9 @@ export const DESTINATIONS = [
     slug: "germany",
     region: "Germany · Black Forest",
     title: "Black Forest Ridge Trail",
-    body: "Germany's Black Forest walked ridge to ridge above pine valleys and clock-making villages. The gentlest tour we run — short days, good food, and trails that start less than an hour from the airport.",
+    body: "Germany's Black Forest walked ridge to ridge above pine valleys and clock-making villages. The gentlest tour we run — short days, good food, and routes that start less than an hour from the airport.",
     image: "/img/bUA57OR2II2k1PqzhTWRuyCnbG4-3d84e1.jpg",
-    alt: "Small group walking a narrow trail through a tall pine forest",
+    alt: "Small group walking a narrow path through a tall pine forest",
   },
   {
     slug: "new-zealand",
@@ -251,7 +251,7 @@ export const DESTINATIONS = [
 export const INCLUDED_SECTION = {
   badge: "What's included",
   title: ["What makes the", "experience different"],
-  body: "From local guides and trailhead transfers to meals, gear, and small groups, every detail is thoughtfully arranged before you arrive.",
+  body: "From local guides and door-to-door transfers to meals, gear, and small groups, every detail is thoughtfully arranged before you arrive.",
 };
 
 // Feature (mist) cards: icon + heading + copy
@@ -259,12 +259,12 @@ export const INCLUDED_FEATURES = {
   guiding: { icon: "2784223275", title: "Guiding", body: "A local lead on every route, start to finish" },
   gear: { icon: "1118047839", title: "Gear", body: "Tents, mats and cookware, already packed" },
   meals: { icon: "50407791", title: "Meals", body: "Fresh meals and snacks, ready every day" },
-  groups: { icon: "2109778876", title: "Small groups", body: "Never more than 8 hikers per guide, every time" },
+  groups: { icon: "2109778876", title: "Small groups", body: "Never more than 8 travellers per guide, every time" },
 };
 
 // Photo cards: image + heading + one-line caption
 export const INCLUDED_PHOTOS = {
-  transfers: { image: IMG.includedTransfers, title: "Transfers", body: "Trailhead to trailhead, no detours" },
+  transfers: { image: IMG.includedTransfers, title: "Transfers", body: "Door to door, no detours" },
   always: { image: IMG.included100, title: "100%", body: "Local guides on every trip" },
 };
 
@@ -286,11 +286,11 @@ export const EXPERIENCE_IMAGES = [
 export const GUIDE_SECTION = {
   badge: "Who are we",
   title: ["Meet the people", "behind the path"],
-  body1: "Our guides grew up walking these mountains, long before it was a job. They know which route fits your pace and what you actually need on the trail — whether it's your first multi-day tour or your tenth.",
-  body2: "They adjust to whoever shows up. Beginners get the full walkthrough, gear to footing, no assumptions made. Experienced hikers get pushed further, faster, with less hand-holding. Either way, you're walking with someone who knows the ground.",
+  body1: "Our guides grew up exploring these mountains, long before it was a job. They know which route fits your pace and what you actually need along the way — whether it's your first multi-day tour or your tenth.",
+  body2: "They adjust to whoever shows up. Beginners get the full walkthrough, no assumptions made. Experienced travellers get pushed further, faster, with less hand-holding. Either way, you're out there with someone who knows the ground.",
   points: [
     { icon: "2327548604", title: "WFR-Certified", body: "WFR-certified guides, 5+ years leading multi-day routes." },
-    { icon: "535953797", title: "Small groups", body: "Max 8 hikers per guide. Real attention on the trail." },
+    { icon: "535953797", title: "Small groups", body: "Max 8 travellers per guide. Real attention on the route." },
   ],
   image: IMG.guide,
   imageAlt: "API Touch travel guide preview showing c",
@@ -327,11 +327,11 @@ export const SERVICES = [
 export const TESTIMONIAL_SECTION = {
   badge: "Testimonials",
   title: ["The memories speak", "for themselves"],
-  body: "Honest reflections from people who explored the trail with API Touch and experienced it for themselves, creating memories that truly last.",
+  body: "Honest reflections from people who travelled with API Touch and experienced it for themselves, creating memories that truly last.",
 };
 
 export const FEATURED_QUOTE = {
-  quote: "\"I came for the mountains, but I left with memories I'll never forget. Every trail, every viewpoint, and every conversation made this journey feel truly special.\"",
+  quote: "\"I came for the mountains, but I left with memories I'll never forget. Every route, every viewpoint, and every conversation made this journey feel truly special.\"",
   name: "Emily Carter",
   trip: "Milford Track",
   image: IMG.testimonial,
@@ -356,8 +356,8 @@ export const REVIEWS = [
 
 export const JOURNAL_SECTION = {
   badge: "Travel Journal",
-  title: ["Stories, Tips &", "Trail inspiration"],
-  body: "Explore hiking guides, travel tips, destination highlights, and outdoor stories to inspire your next adventure.",
+  title: ["Stories, Tips &", "Travel inspiration"],
+  body: "Explore travel guides, tips, destination highlights, and outdoor stories to inspire your next adventure.",
   cta: "Explore Journal",
   ctaHref: "/blog",
 };
@@ -389,7 +389,7 @@ export const JOURNAL = [
 export const FAQ_SECTION = {
   badge: "FAQ",
   title: ["Good to know", "before you go"],
-  body: "From packing lists to trail difficulty, here's everything you need to feel prepared.",
+  body: "From packing lists to route difficulty, here's everything you need to feel prepared.",
   cta: "Get in touch",
   ctaHref: "/contact",
 };
@@ -408,8 +408,8 @@ export const FOOTER = {
   cta: "Explore Tours",
   ctaHref: "/tours",
   background: IMG.footer,
-  backgroundAlt: "Scenic mountain trail background in the ",
-  subline: "Guided tours, breathtaking trails, and unforgettable moments—all thoughtfully crafted in one place.",
+  backgroundAlt: "Scenic mountain route background in the ",
+  subline: "Guided tours, breathtaking destinations, and unforgettable moments—all thoughtfully crafted in one place.",
   copyright: "© 2026 API Touch",
   columns: [
     { label: "Navigation", links: [

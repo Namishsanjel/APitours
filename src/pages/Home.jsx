@@ -13,7 +13,7 @@ import Footer from "../components/Footer.jsx";
 
 export default function Home() {
   useEffect(() => {
-    document.title = "API Touch — Guided Tours & Outdoor Adventure Travel";
+    document.title = "API Touch — Guided Tours & Vacations";
   }, []);
 
   return (

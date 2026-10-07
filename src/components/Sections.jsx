@@ -30,7 +30,7 @@ export function Experience() {
         <h2 className="font-display mt-3 text-3xl font-bold md:text-5xl">See what the journey feels like</h2>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           {EXPERIENCE_IMAGES.map((src, i) => (
-            <img key={src} src={src} alt={`Guided hiking experience ${i + 1}`} className="h-64 w-full rounded-2xl object-cover" loading="lazy" />
+            <img key={src} src={src} alt={`Guided travel experience ${i + 1}`} className="h-64 w-full rounded-2xl object-cover" loading="lazy" />
           ))}
         </div>
       </div>

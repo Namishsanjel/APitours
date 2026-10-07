@@ -30,7 +30,7 @@ export function Journal() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-primary">Travel Journal</p>
-            <h2 className="font-display mt-3 text-3xl font-bold md:text-5xl">Stories, Tips &amp; Trail inspiration</h2>
+            <h2 className="font-display mt-3 text-3xl font-bold md:text-5xl">Stories, Tips &amp; Travel inspiration</h2>
           </div>
           <a href="#journal" className="rounded-full border border-ink/20 px-6 py-2.5 text-sm font-semibold hover:bg-ink hover:text-white">
             Explore Journal

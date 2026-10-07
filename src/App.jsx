@@ -31,9 +31,19 @@ const ALIASES = [
   [/^\/journal(\/|$)/, "/blog$1"],
 ];
 
+/** Tour slugs that were renamed when the site moved to tours/vacations wording.
+ *  The old URLs still resolve: each one is rewritten to its new slug. */
+const SLUG_ALIASES = [
+  ["/tours/inca-trail-to-machu-picchu", "/tours/inca-tour-machu-picchu"],
+  ["/tours/cinque-terre-coastal-trail", "/tours/cinque-terre-coast"],
+  ["/tours/black-forest-ridge-trail", "/tours/black-forest-ridge"],
+  ["/tours/laugavegur-trail", "/tours/laugavegur"],
+];
+
 function resolve(path) {
   let p = normalize(path);
   for (const [re, to] of ALIASES) if (re.test(p)) p = p.replace(re, to);
+  for (const [from, to] of SLUG_ALIASES) if (p === from) p = to;
   return p;
 }
 

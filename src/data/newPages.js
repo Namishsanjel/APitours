@@ -38,7 +38,7 @@ export const DESTINATIONS_ALL = [
     alt: "Two tents pitched on an open meadow beneath a mountain ridge at sunset",
     body: "Scotland's classic 150 km route from Glasgow to Fort William, across Rannoch Moor and the Devil's Staircase. Long summer light, empty glens, and a warm pub waiting at the end of each stage.",
     attractions: ["Rannoch Moor", "Devil's Staircase", "Loch Lomond shore", "Fort William"],
-    activities: ["Waymarked trail walking", "Bagging a Munro", "Bunkhouse nights", "Pub stops in every village"],
+    activities: ["Waymarked path walking", "Bagging a Munro", "Bunkhouse nights", "Pub stops in every village"],
     bestTime: ["May – June", "Long daylight in summer", "September for quiet glens", "Expect rain any month"],
     tours: ["west-highland-way"],
   },
@@ -48,12 +48,12 @@ export const DESTINATIONS_ALL = [
     region: "Germany · Black Forest",
     continent: "Europe",
     image: "/img/black-forest-ridge-trail.jpg",
-    alt: "Small group walking a narrow trail through a tall pine forest",
-    body: "Germany's Black Forest walked ridge to ridge above pine valleys and clock-making villages. The gentlest tour we run — short days, good food, and trails that start less than an hour from the airport.",
-    attractions: ["Merkurius ridge trails", "Clock-making villages", "Black Forest cake stops", "Valley railway towns"],
+    alt: "Small group walking a narrow path through a tall pine forest",
+    body: "Germany's Black Forest walked ridge to ridge above pine valleys and clock-making villages. The gentlest tour we run — short days, good food, and routes that start less than an hour from the airport.",
+    attractions: ["Merkurius ridge walks", "Clock-making villages", "Black Forest cake stops", "Valley railway towns"],
     activities: ["Ridge walking", "Village overnights", "Short transfer days", "Local food stops"],
     bestTime: ["April – October", "May for long evenings", "October colour", "Closed-toe boots year round"],
-    tours: ["black-forest-ridge-trail"],
+    tours: ["black-forest-ridge"],
   },
   {
     slug: "new-zealand",
@@ -76,10 +76,10 @@ export const DESTINATIONS_ALL = [
     image: "/img/machu-picchu.jpg",
     alt: "",
     body: "From hidden valleys to iconic summits, explore tours designed for curious minds and adventurous spirits.",
-    attractions: ["Machu Picchu", "Sun Gate approach", "Andean trail towns", "Sacred Valley"],
+    attractions: ["Machu Picchu", "Sun Gate approach", "Andean mountain towns", "Sacred Valley"],
     activities: ["High-altitude trekking", "Ruins at first light", "Local market days", "Train transfer out"],
-    bestTime: ["May – September", "Dry season on the trail", "June for clear skies", "Pack for cold nights"],
-    tours: ["inca-trail-to-machu-picchu"],
+    bestTime: ["May – September", "Dry season on the route", "June for clear skies", "Pack for cold nights"],
+    tours: ["inca-tour-machu-picchu"],
   },
   {
     slug: "chile",
@@ -105,7 +105,7 @@ export const DESTINATIONS_ALL = [
     attractions: ["The five villages", "Coastal stairways", "Harbour terraces", "Cliff-top vineyards"],
     activities: ["Coastal path walking", "Swim stops", "Village dinners", "Short transfer days"],
     bestTime: ["April – June", "September – October", "Avoid August crowds", "Warm sea into autumn"],
-    tours: ["cinque-terre-coastal-trail"],
+    tours: ["cinque-terre-coast"],
   },
   {
     slug: "france",
@@ -117,7 +117,7 @@ export const DESTINATIONS_ALL = [
     body: "Four corners of the map where we run our smallest groups. Pick the landscape first — the route, the pace and the places you sleep get built around it.",
     attractions: ["Mont Blanc massif", "Chamonix valley", "Alpine meadows", "Refuge stops"],
     activities: ["Circle trekking", "Cable-car start days", "Cheese stops in every col", "Hut-to-hut walking"],
-    bestTime: ["Late June – September", "July for open passes", "September for quiet trails", "Snow above 2,500 m early"],
+    bestTime: ["Late June – September", "July for open passes", "September for quiet routes", "Snow above 2,500 m early"],
     tours: ["tour-du-mont-blanc"],
   },
   {
@@ -144,7 +144,7 @@ export const DESTINATIONS_ALL = [
     attractions: ["Landmannalaugar rhyolite", "Hekla views", "Hot spring rivers", "Black lava fields"],
     activities: ["Hut-to-hut trekking", "River crossings", "Soaking at the end of the day", "Midnight sun walking"],
     bestTime: ["Late June – early September", "Midnight sun", "Snow-free highlands", "Book huts ahead"],
-    tours: ["laugavegur-trail"],
+    tours: ["laugavegur"],
   },
 ];
 
@@ -198,7 +198,7 @@ export const EXPERIENCES = [
   {
     slug: "family",
     title: "Family travel",
-    body: "The gentlest tour we run — short days, good food, and trails that start less than an hour from the airport.",
+    body: "The gentlest tour we run — short days, good food, and routes that start less than an hour from the airport.",
     image: "/img/Y4I3ptD9YsDTo6Vc4GeLFGL2zZc-3d84e1.jpg",
   },
 ];
@@ -206,15 +206,15 @@ export const EXPERIENCES = [
 // Which travel type each tour is filed under (used by the tours filters).
 export const EXPERIENCE_BY_TOUR = {
   "annapurna-base-camp": "trekking",
-  "inca-trail-to-machu-picchu": "culture",
-  "cinque-terre-coastal-trail": "family",
+  "inca-tour-machu-picchu": "culture",
+  "cinque-terre-coast": "family",
   "mount-kilimanjaro": "adventure",
-  "black-forest-ridge-trail": "family",
+  "black-forest-ridge": "family",
   "milford-track": "trekking",
   "torres-del-paine-circuit": "adventure",
   "tour-du-mont-blanc": "trekking",
   "west-highland-way": "trekking",
-  "laugavegur-trail": "adventure",
+  "laugavegur": "adventure",
 };
 
 // ---------------------------------------------------------------------------
@@ -225,18 +225,18 @@ export const SERVICES_PAGE = {
   badge: "Services",
   title: "Everything sorted before you go",
   sub: "Three things every trip needs, taken off your list — visas, flights and rooms booked, confirmed, and sent to you as one itinerary.",
-  body: "From local guides and trailhead transfers to meals, gear, and small groups, every detail is thoughtfully arranged before you arrive.",
+  body: "From local guides and door-to-door transfers to meals, gear, and small groups, every detail is thoughtfully arranged before you arrive.",
   extra: [
     {
       title: "Transportation",
-      body: "Trailhead to trailhead, no detours",
-      note: "Airport pick-up, trailhead transfers and the return leg, all booked on the same itinerary.",
+      body: "Door to door, no detours",
+      note: "Airport pick-up, local transfers and the return leg, all booked on the same itinerary.",
       image: "/img/3GCyVYdlNAmCVUUaBGEwCGt3LYc-a6d13a.png",
     },
     {
       title: "Permits",
       body: "Visas, transit stops and permits, all of it before you book anything else.",
-      note: "Park entries, trail permits and restricted-area paperwork lodged with your dates already confirmed.",
+      note: "Park entries, route permits and restricted-area paperwork lodged with your dates already confirmed.",
       image: "",
     },
     {
@@ -311,12 +311,12 @@ export const CANCELLATION = {
     {
       heading: "If we cancel",
       paragraphs: [
-        "If we cannot run the trip — not enough guides, a closed trail, a permit refused — you get a full refund, including the deposit, or you can move the whole booking to any other departure with space.",
+        "If we cannot run the trip — not enough guides, a closed route, a permit refused — you get a full refund, including the deposit, or you can move the whole booking to any other departure with space.",
         "We never hold your money back when the cancellation is on us.",
       ],
     },
     {
-      heading: "Weather and trail closures",
+      heading: "Weather and route closures",
       paragraphs: [
         "Guides know the alternate routes and adjust the day. Turning a day around is not a cancellation and is not refundable.",
         "If a route is closed for the whole trip, the section in this policy for cancellations by us applies.",

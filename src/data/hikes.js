@@ -1,11 +1,13 @@
-// Hikes listing page content, measured from the rendered mirror
+// Tours listing page content, measured from the rendered mirror
 // (http://localhost:8091/trova-travel.framer.website/hikes.html).
-// Each card uses the photo named after its own trail, copied from img/.
+// Each card uses the photo named after its own route, copied from img/.
+// Display titles keep the real-world names of the trails; the slugs and URLs
+// use tour/vacation wording instead.
 
 export const HIKES_PAGE = {
   documentTitle: "Tours & Packages — API Touch",
   badge: "Tours & Packages",
-  title: ["Find", "Your", "Next", "Trail"],
+  title: ["Find", "Your", "Next", "Trip"],
   sub: "From peaceful forest walks to challenging mountain summits, discover adventures made for every kind of explorer.",
   filters: ["All", "Easy", "Moderate", "Tough"],
 };
@@ -17,23 +19,23 @@ export const HIKES_ALL = [
     title: "Annapurna Base Camp",
     href: "/tours/annapurna-base-camp",
     image: "/img/abc.jpg",
-    alt: "Annapurna Base Camp hiking gallery image showing scenic trail conditions and landscape",
+    alt: "Annapurna Base Camp tour photo showing scenic mountain conditions and landscape",
   },
   {
-    slug: "inca-trail-to-machu-picchu",
+    slug: "inca-tour-machu-picchu",
     chips: ["Tough", "4 Days"],
     title: "Inca Trail to Machu Picchu",
-    href: "/tours/inca-trail-to-machu-picchu",
+    href: "/tours/inca-tour-machu-picchu",
     image: "/img/machu-picchu.jpg",
-    alt: "Inca Trail to Machu Picchu guided hiking trip hero image for API Touch outdoor adventures",
+    alt: "Inca Trail to Machu Picchu guided tour hero image for API Touch outdoor adventures",
   },
   {
-    slug: "cinque-terre-coastal-trail",
+    slug: "cinque-terre-coast",
     chips: ["Easy", "3 Days"],
     title: "Cinque Terre Coastal Trail",
-    href: "/tours/cinque-terre-coastal-trail",
+    href: "/tours/cinque-terre-coast",
     image: "/img/cinque-terre-coastal-trail.jpg",
-    alt: "Cinque Terre Coastal Trail guided hiking trip hero image for API Touch outdoor adventures",
+    alt: "Cinque Terre Coastal Trail guided tour hero image for API Touch outdoor adventures",
   },
   {
     slug: "mount-kilimanjaro",
@@ -41,15 +43,15 @@ export const HIKES_ALL = [
     title: "Mount Kilimanjaro",
     href: "/tours/mount-kilimanjaro",
     image: "/img/mount-kilimanjaro.jpg",
-    alt: "Mount Kilimanjaro guided hiking trip hero image for API Touch outdoor adventures",
+    alt: "Mount Kilimanjaro guided tour hero image for API Touch outdoor adventures",
   },
   {
-    slug: "black-forest-ridge-trail",
+    slug: "black-forest-ridge",
     chips: ["Easy", "3 Days"],
     title: "Black Forest Ridge Trail",
-    href: "/tours/black-forest-ridge-trail",
+    href: "/tours/black-forest-ridge",
     image: "/img/black-forest-ridge-trail.jpg",
-    alt: "Black Forest Ridge Trail guided hiking trip hero image for API Touch outdoor adventures",
+    alt: "Black Forest Ridge Trail guided tour hero image for API Touch outdoor adventures",
   },
   {
     slug: "milford-track",
@@ -57,7 +59,7 @@ export const HIKES_ALL = [
     title: "Milford Track",
     href: "/tours/milford-track",
     image: "/img/milford-track.jpg",
-    alt: "Milford Track guided hiking trip hero image for API Touch outdoor adventures",
+    alt: "Milford Track guided tour hero image for API Touch outdoor adventures",
   },
   {
     slug: "torres-del-paine-circuit",
@@ -73,7 +75,7 @@ export const HIKES_ALL = [
     title: "Tour du Mont Blanc",
     href: "/tours/tour-du-mont-blanc",
     image: "/img/tour-du-mont-blanc.jpg",
-    alt: "The alpine trail of the Tour du Mont Blanc with the massif rising in the distance",
+    alt: "The alpine route of the Tour du Mont Blanc with the massif rising in the distance",
   },
   {
     slug: "west-highland-way",
@@ -84,10 +86,10 @@ export const HIKES_ALL = [
     alt: "The wide open moorland of Rannoch Moor along the West Highland Way",
   },
   {
-    slug: "laugavegur-trail",
+    slug: "laugavegur",
     chips: ["Moderate", "4 Days"],
     title: "Laugavegur Trail",
-    href: "/tours/laugavegur-trail",
+    href: "/tours/laugavegur",
     image: "/img/laugavegur-trail.jpg",
     alt: "The rhyolite mountains of Landmannalaugar along the start of the Laugavegur Trail",
   },
