@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ABOUT } from "../data/content.js";
 import Icon from "../data/Icon.jsx";
 import { Eyebrow } from "./ui.jsx";
@@ -10,13 +11,12 @@ const POLAROIDS = [
   { left: "49.6%", top: "44.2%", rotate: "12deg" },
 ];
 
-const DOTS = [
-  { icon: "3975609195", selected: false },
-  { icon: "1118047839", selected: true },
-  { icon: "739446849", selected: false },
-];
+const DOTS = ["3975609195", "1118047839", "739446849"];
 
 export default function About() {
+  // which photo the stack is showing; the dot buttons drive it
+  const [active, setActive] = useState(1);
+
   return (
     <section id="about" className="section-py">
       <div className="container-x flex flex-col gap-6 min-[1100px]:flex-row min-[1100px]:justify-between">
@@ -40,39 +40,51 @@ export default function About() {
             <h3 className="t-h4">{ABOUT.cardTitle}</h3>
             <p className="t-body mt-2">{ABOUT.cardBody}</p>
 
-            {/* tilted polaroid stack */}
+            {/* Tilted polaroid stack. The selected photo is lifted forward and
+                brought to full opacity; the other two stay in place, dimmed.
+                Sizes and offsets stay as measured so only the emphasis moves. */}
             <div className="pointer-events-none absolute inset-0">
-              {ABOUT.polaroids.map((src, i) => (
-                <div
-                  key={src}
-                  /* sized off the card's own width (136/406 measured) so the
-                     stack stays inside it on a narrow phone */
-                  className="polaroid-shadow absolute aspect-square w-[33.5%] rounded-xl bg-cream p-1"
-                  style={{
-                    left: POLAROIDS[i].left,
-                    top: POLAROIDS[i].top,
-                    transform: `rotate(${POLAROIDS[i].rotate})`,
-                  }}
-                >
-                  <img src={src} alt="" className="h-full w-full rounded-lg object-cover" />
-                </div>
-              ))}
+              {ABOUT.polaroids.map((src, i) => {
+                const on = i === active;
+                return (
+                  <div
+                    key={src}
+                    /* sized off the card's own width (136/406 measured) so the
+                       stack stays inside it on a narrow phone */
+                    className="polaroid-shadow absolute aspect-square w-[33.5%] rounded-xl bg-cream p-1 transition-[opacity,transform] duration-500 ease-out"
+                    style={{
+                      left: POLAROIDS[i].left,
+                      top: POLAROIDS[i].top,
+                      zIndex: on ? 20 : 10,
+                      opacity: on ? 1 : 0.42,
+                      transform: `rotate(${POLAROIDS[i].rotate}) scale(${on ? 1.16 : 1})`,
+                    }}
+                  >
+                    <img src={src} alt="" className="h-full w-full rounded-lg object-cover" />
+                  </div>
+                );
+              })}
             </div>
 
-            <div className="mt-auto flex justify-center gap-[10px]">
-              {DOTS.map((d, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  aria-label={`Slide ${i + 1}`}
-                  className={`flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg ${
-                    d.selected ? "bg-primary" : "bg-mist"
-                  }`}
-                  style={{ color: d.selected ? "#ffffff" : "var(--color-ink)" }}
-                >
-                  <Icon id={d.icon} size={24} />
-                </button>
-              ))}
+            <div className="mt-auto flex justify-center gap-[10px]" role="group" aria-label="Choose a photo">
+              {DOTS.map((icon, i) => {
+                const on = i === active;
+                return (
+                  <button
+                    key={icon}
+                    type="button"
+                    onClick={() => setActive(i)}
+                    aria-label={`Show photo ${i + 1}`}
+                    aria-pressed={on}
+                    className={`flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg transition-colors duration-200 ${
+                      on ? "bg-primary" : "bg-mist hover:bg-e4"
+                    }`}
+                    style={{ color: on ? "#ffffff" : "var(--color-ink)" }}
+                  >
+                    <Icon id={icon} size={24} />
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
