@@ -36,13 +36,13 @@ export default function DestinationDetailPage() {
 
   return (
     <PageShell>
-      <section className="container-x flex flex-col gap-8 pt-[120px]">
+      <section className="container-x flex flex-col gap-6 pt-[120px] max-[1099.98px]:pt-[100px] max-[639.98px]:pt-[88px]">
         <PageHeader badge={dest.region} title={dest.name} sub={dest.body} />
-        <img src={dest.image} alt={dest.alt} className="h-[420px] w-full rounded-lg object-cover max-[809.98px]:h-[260px]" />
+        <img src={dest.image} alt={dest.alt} className="h-[240px] w-full rounded-lg object-cover min-[639.98px]:h-[320px] min-[1100px]:h-[420px]" />
       </section>
 
-      <section className="container-x flex flex-col gap-12 pb-[60px] pt-12">
-        <div className="flex gap-12 max-[809.98px]:flex-col">
+      <section className="container-x flex flex-col gap-8 pb-[60px] pt-10 min-[639.98px]:gap-12 min-[639.98px]:pt-12">
+        <div className="flex flex-col gap-8 min-[900px]:flex-row min-[900px]:gap-12">
           <FactList title="Attractions" items={dest.attractions} />
           <FactList title="Activities" items={dest.activities} />
           <FactList title="Best time to visit" items={dest.bestTime} />
@@ -56,7 +56,7 @@ export default function DestinationDetailPage() {
                 All tours
               </a>
             </div>
-            <div className="grid grid-cols-2 gap-6 max-[809.98px]:grid-cols-1">
+            <div className="grid grid-cols-1 gap-6 min-[639.98px]:grid-cols-2 min-[1100px]:grid-cols-2">
               {tours.map((t, i) => (
                 <TourCard key={t.slug} tour={t} index={i} />
               ))}
@@ -64,8 +64,8 @@ export default function DestinationDetailPage() {
           </div>
         ) : null}
 
-        <div className="flex items-center justify-between gap-6 rounded-lg bg-mist p-6 max-[809.98px]:flex-col max-[809.98px]:items-start">
-          <div className="flex flex-col gap-1">
+        <div className="flex flex-col items-start gap-4 rounded-lg bg-mist p-6 min-[900px]:flex-row min-[900px]:items-center min-[900px]:justify-between min-[900px]:gap-6">
+          <div className="flex min-w-0 flex-col gap-1">
             <p className="t-h4 text-ink">Want {dest.name} built around you?</p>
             <p className="t-body">Tell us your dates and group size — we come back with a route and a price.</p>
           </div>

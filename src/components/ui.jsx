@@ -16,7 +16,14 @@ export function Words({ text, delay = 80, step = 80 }) {
       {words.map((word, i) => (
         <Fragment key={`${word}-${i}`}>
           {i > 0 ? " " : null}
-          <Reveal as="span" effect="far" delay={delay + i * step} className="inline-block">
+          <Reveal
+            as="span"
+            effect="far"
+            delay={delay + i * step}
+            /* inline-block words don't break by default: cap them to the
+               container so a long word can't push the page sideways */
+            className="inline-block max-w-full break-words"
+          >
             {word}
           </Reveal>
         </Fragment>
@@ -42,8 +49,11 @@ export function Eyebrow({ children, color = "var(--color-ink)", className = "" }
  */
 export function SectionHead({ badge, title, children, leftW = 560, rightW = 706 }) {
   return (
-    <div className="flex items-stretch justify-between">
-      <div style={{ width: leftW }}>
+    /* Desktop: the measured 560 + 706 pair side by side. Below the width that
+       pair needs, the right column drops under the left and goes left-aligned
+       like the page headers do. */
+    <div className="flex flex-col items-stretch justify-between gap-6 min-[1100px]:flex-row">
+      <div className="w-full min-w-0" style={{ maxWidth: leftW }}>
         <Reveal effect="far">
           <Eyebrow>{badge}</Eyebrow>
         </Reveal>
@@ -63,8 +73,8 @@ export function SectionHead({ badge, title, children, leftW = 560, rightW = 706 
       </div>
       <Reveal
         delay={140}
-        className="flex flex-col items-end justify-end gap-4 text-right"
-        style={{ width: rightW }}
+        className="flex w-full min-w-0 flex-col items-end justify-end gap-4 text-right max-[1099.98px]:items-start max-[1099.98px]:text-left"
+        style={{ maxWidth: rightW }}
       >
         {children}
       </Reveal>
@@ -84,8 +94,8 @@ export function HeadCopy({ children }) {
  */
 export function PageHeader({ badge, title, sub }) {
   return (
-    <div className="flex items-end justify-between max-[809.98px]:flex-col max-[809.98px]:items-start max-[809.98px]:gap-4">
-      <div className="flex w-[560px] flex-col gap-2 max-[809.98px]:w-full">
+    <div className="flex flex-col items-start gap-4 min-[900px]:flex-row min-[900px]:items-end min-[900px]:justify-between min-[900px]:gap-8">
+      <div className="flex w-full min-w-0 flex-col gap-2" style={{ maxWidth: 560 }}>
         {badge ? (
           <Reveal effect="far">
             <Eyebrow>{badge}</Eyebrow>
@@ -100,7 +110,8 @@ export function PageHeader({ badge, title, sub }) {
           as="p"
           effect="far"
           delay={200}
-          className="t-body w-[706px] text-right max-[809.98px]:w-full max-[809.98px]:text-left"
+          className="t-body w-full min-w-0 text-left min-[900px]:text-right"
+          style={{ maxWidth: 706 }}
         >
           {sub}
         </Reveal>

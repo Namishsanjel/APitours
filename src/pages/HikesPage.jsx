@@ -22,7 +22,7 @@ function HikeCard({ hike, className = "", index = null }) {
         <div className="grad-card absolute inset-0" />
         <ImgBlur />
         <div className="absolute inset-0 z-10 flex flex-col justify-between p-4">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {hike.chips.map((c) => (
               <span key={c} className="chip">
                 {c}
@@ -47,8 +47,8 @@ function HikeCard({ hike, className = "", index = null }) {
 /** One labelled row of filter pills, in the listing page's own pill style. */
 function FilterRow({ label, options, value, onChange, surface = "bg-mist" }) {
   return (
-    <div className="flex items-center gap-3 max-[809.98px]:flex-col max-[809.98px]:items-start">
-      <p className="t-eyebrow w-[100px] shrink-0 text-smoke max-[809.98px]:w-auto">{label}</p>
+    <div className="flex flex-col items-start gap-3 min-[639.98px]:flex-row min-[639.98px]:items-center">
+      <p className="t-eyebrow w-auto shrink-0 text-smoke min-[639.98px]:w-[100px]">{label}</p>
       <div className="flex flex-wrap gap-2">
         {options.map((o) => {
           const on = o === value;
@@ -104,7 +104,7 @@ function FilterMenu({ groups, onReset }) {
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-haspopup="true"
-        className="group flex items-center gap-3 rounded-lg bg-mist px-4 py-3 transition-colors duration-200 hover:bg-secondary"
+        className="group flex cursor-pointer items-center gap-3 rounded-lg bg-mist px-4 py-3 transition-colors duration-200 hover:bg-secondary"
       >
         <span className="t-link text-ink group-hover:text-mist">filters</span>
         {active > 0 ? (
@@ -118,7 +118,7 @@ function FilterMenu({ groups, onReset }) {
       </button>
 
       {open ? (
-        <div className="menu-in absolute left-0 top-[calc(100%+8px)] flex max-h-[60vh] w-[560px] max-w-[calc(100vw-32px)] flex-col gap-3 overflow-y-auto rounded-lg bg-mist p-4 shadow-[0_16px_40px_rgba(40,40,40,0.14)]">
+        <div className="menu-in absolute left-0 top-[calc(100%+8px)] flex max-h-[60dvh] w-[560px] max-w-[calc(100vw-32px)] flex-col gap-3 overflow-y-auto overscroll-contain rounded-lg bg-mist p-4 shadow-[0_16px_40px_rgba(40,40,40,0.14)]">
           {groups.map((g) => (
             <FilterRow
               key={g.label}
@@ -154,8 +154,8 @@ function FilterMenu({ groups, onReset }) {
  * into single-column cards of one uniform height.
  */
 const CARD_LARGE =
-  "col-span-2 row-span-2 h-[600px] max-[809.98px]:col-span-1 max-[809.98px]:row-span-1 max-[809.98px]:h-[420px]";
-const CARD_SMALL = "h-[288px] max-[809.98px]:h-[420px]";
+  "col-span-2 row-span-2 h-[600px] max-[1099.98px]:col-span-1 max-[1099.98px]:row-span-1 max-[1099.98px]:h-[420px]";
+const CARD_SMALL = "h-[420px] min-[1100px]:h-[288px]";
 
 const destinationOf = (slug) => DESTINATIONS_ALL.find((d) => d.tours.includes(slug))?.name ?? "Other";
 
@@ -229,16 +229,18 @@ export default function HikesPage() {
     <>
       <Navbar variant="dark" />
       <main>
-        <section className="container-x flex flex-col gap-6 pt-[120px]">
+        <section className="page-sec container-x flex flex-col gap-6">
           {/* header row: badge + h1 (left), right-aligned intro copy */}
-          <div className="flex items-end justify-between">
-            <div className="flex w-[560px] flex-col gap-2">
+          <div className="flex flex-col items-start gap-4 min-[900px]:flex-row min-[900px]:items-end min-[900px]:justify-between min-[900px]:gap-8">
+            <div className="flex w-full min-w-0 flex-col gap-2" style={{ maxWidth: 560 }}>
               <Eyebrow>{HIKES_PAGE.badge}</Eyebrow>
               <h1 className="t-h1p">
                 <Words text={HIKES_PAGE.title} />
               </h1>
             </div>
-            <p className="t-body w-[706px] text-right">{HIKES_PAGE.sub}</p>
+            <p className="t-body w-full min-w-0 text-left min-[900px]:text-right" style={{ maxWidth: 706 }}>
+              {HIKES_PAGE.sub}
+            </p>
           </div>
 
           {/* filters (collapsed into one dropdown) + gallery-style grid */}
@@ -251,7 +253,7 @@ export default function HikesPage() {
             </div>
 
             {list.length ? (
-              <div className="grid auto-rows-[288px] grid-cols-4 gap-6 max-[1099.98px]:grid-cols-2 max-[809.98px]:grid-cols-1 max-[809.98px]:auto-rows-[420px]">
+              <div className="grid auto-rows-[420px] grid-cols-1 gap-6 min-[639.98px]:grid-cols-2 min-[1100px]:grid-cols-4 min-[1100px]:auto-rows-[288px]">
                 {list.map((h, i) => (
                   <HikeCard
                     key={h.slug}

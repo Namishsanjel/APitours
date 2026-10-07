@@ -16,7 +16,7 @@ export default function FaqPage() {
 
   return (
     <PageShell faq={false}>
-      <section className="container-x flex flex-col gap-12 pt-[120px] pb-[60px]">
+      <section className="page-sec container-x flex flex-col gap-8 min-[639.98px]:gap-12">
         <PageHeader badge={FAQ_SECTION.badge} title={FAQ_SECTION.title.join(" ")} sub={FAQ_SECTION.body} />
 
         <FaqList />

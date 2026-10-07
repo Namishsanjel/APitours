@@ -12,7 +12,7 @@ export default function Icon({ id, size = 24, sw, className = "", style }) {
   return (
     <span
       className={`icon-svg ${className}`}
-      style={{ display: "block", width: size, height: size, flex: "none", ...style }}
+      style={{ display: "block", width: size, height: size, maxWidth: "100%", flex: "none", ...style }}
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   );

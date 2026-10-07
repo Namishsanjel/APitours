@@ -12,17 +12,17 @@ export default function Journal() {
           </a>
         </SectionHead>
 
-        <div className="mt-12 grid grid-cols-3 gap-4">
+        <div className="mt-8 grid grid-cols-1 gap-4 min-[639.98px]:mt-12 min-[900px]:grid-cols-3">
           {JOURNAL.map((post) => (
             <a
               key={post.href}
               href={post.href}
-              className="relative block h-[480px] overflow-hidden rounded-lg"
+              className="relative block h-[380px] overflow-hidden rounded-lg min-[639.98px]:h-[480px]"
             >
               <img src={post.image} alt={post.alt} className="absolute inset-0 h-full w-full object-cover" />
               <div className="grad-card absolute inset-0" />
               <div className="absolute inset-0 flex flex-col justify-between p-5">
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {post.tags.map((t) => (
                     <span key={t} className="chip">
                       {t}

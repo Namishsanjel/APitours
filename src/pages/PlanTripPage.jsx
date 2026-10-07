@@ -94,11 +94,11 @@ export default function PlanTripPage() {
                 </Reveal>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 min-[480px]:gap-6">
                 {info.map((i) => (
-                  <div key={i.label} className="flex flex-col gap-2">
+                  <div key={i.label} className="flex min-w-0 flex-col gap-2">
                     <p className="t-eyebrow capitalize text-mist">{i.label}</p>
-                    <p className="t-link capitalize text-sage">{i.value}</p>
+                    <p className="t-link capitalize break-words text-sage">{i.value}</p>
                   </div>
                 ))}
               </div>
@@ -106,7 +106,8 @@ export default function PlanTripPage() {
 
             <div className="contact-right">
               <form
-                className="flex w-full max-w-[520px] flex-col rounded-lg bg-mist p-6"
+                className="flex w-full min-w-0 flex-col rounded-lg bg-mist p-6"
+                style={{ maxWidth: 520 }}
                 onSubmit={(e) => e.preventDefault()}
               >
                 <div className="flex flex-col gap-4">

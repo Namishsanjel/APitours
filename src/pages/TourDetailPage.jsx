@@ -44,7 +44,7 @@ export default function TourDetailPage() {
   if (!tour || !detail) {
     return (
       <PageShell faq={false}>
-        <section className="container-x flex flex-col gap-6 pt-[120px] pb-[60px]">
+        <section className="page-sec container-x flex flex-col gap-6">
           <PageHeader badge="Tour" title="This tour could not be found" />
           <a href="/tours" className="btn btn-dark w-[160px]">
             Browse all tours
@@ -61,16 +61,16 @@ export default function TourDetailPage() {
   return (
     <PageShell>
       {/* headline + standfirst, as on the original detail page */}
-      <section className="container-x flex flex-col gap-8 pt-[120px]">
+      <section className="container-x flex flex-col gap-8 pt-[120px] max-[1099.98px]:pt-[100px] max-[639.98px]:pt-[88px]">
         <PageHeader title={detail.title} sub={tagline} />
 
         {/* hero photo with the trip facts glassed over it */}
-        <div className="relative h-[360px] overflow-hidden rounded-lg bg-mist p-1 max-[809.98px]:h-[260px]">
+        <div className="relative h-[240px] overflow-hidden rounded-lg bg-mist p-1 min-[639.98px]:h-[300px] min-[1100px]:h-[360px]">
           <div className="relative h-full w-full overflow-hidden rounded">
             <img src={tour.image} alt={tour.alt} className="absolute inset-0 h-full w-full object-cover" />
             <div className="grad-card absolute inset-0" />
             <ImgBlur />
-            <div className="absolute inset-0 z-10 flex gap-2 p-4">
+            <div className="absolute inset-0 z-10 flex flex-wrap gap-2 p-4">
               {detail.chips.map((c) => (
                 <span key={c} className="chip">
                   {c}
@@ -82,8 +82,8 @@ export default function TourDetailPage() {
       </section>
 
       {/* body: itinerary column + booking card */}
-      <section className="container-x flex justify-between gap-8 pb-[60px] pt-12 max-[1099.98px]:flex-col">
-        <div className="flex w-[800px] flex-col gap-10 max-[1099.98px]:w-full">
+      <section className="container-x flex flex-col gap-8 pb-[60px] pt-10 min-[1100px]:flex-row min-[1100px]:justify-between min-[1100px]:pt-12">
+        <div className="flex w-full min-w-0 flex-col gap-10" style={{ maxWidth: 800 }}>
           <div className="flex flex-col gap-3">
             <h2 className="t-h4 text-ink">Overview</h2>
             {overview.map((p) => (
@@ -95,7 +95,7 @@ export default function TourDetailPage() {
 
           <div className="flex flex-col gap-4">
             <h2 className="t-h4 text-ink">What's Included</h2>
-            <div className="grid grid-cols-3 gap-x-6 gap-y-3 max-[809.98px]:grid-cols-2">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-3 min-[639.98px]:grid-cols-2 min-[1100px]:grid-cols-3">
               {detail.inclusions.map((i) => (
                 <div key={i} className="flex items-center gap-2 text-ink">
                   <CheckIcon />
@@ -107,7 +107,7 @@ export default function TourDetailPage() {
 
           <div className="flex flex-col gap-4">
             <h2 className="t-h4 text-ink">Gallery</h2>
-            <div className="relative h-[380px] overflow-hidden rounded-lg max-[809.98px]:h-[260px]">
+            <div className="relative h-[240px] overflow-hidden rounded-lg min-[639.98px]:h-[300px] min-[1100px]:h-[380px]">
               <img
                 key={shot}
                 src={GALLERY_IMAGES[shot]}
@@ -149,7 +149,7 @@ export default function TourDetailPage() {
         </div>
 
         {/* booking card: photo, trip facts, price and the booking CTA */}
-        <aside className="flex w-[470px] shrink-0 flex-col gap-5 self-start rounded-lg bg-mist p-6 max-[1099.98px]:w-full">
+        <aside className="flex w-full min-w-0 shrink-0 flex-col gap-5 self-start rounded-lg bg-mist p-6 min-[1100px]:w-[470px]">
           <div className="h-[170px] overflow-hidden rounded-lg">
             <img src={tour.image} alt="" className="h-full w-full object-cover" />
           </div>
@@ -183,7 +183,7 @@ export default function TourDetailPage() {
 
       <section className="container-x flex flex-col gap-6 pb-[60px]">
         <h2 className="t-h3l text-ink">More Tours to Explore</h2>
-        <div className="grid grid-cols-2 gap-6 max-[809.98px]:grid-cols-1">
+        <div className="grid grid-cols-1 gap-6 min-[900px]:grid-cols-2">
           {others.map((t, i) => (
             <TourCard key={t.slug} tour={t} index={i} />
           ))}

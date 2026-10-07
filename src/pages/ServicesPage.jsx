@@ -25,11 +25,11 @@ export default function ServicesPage() {
 
   return (
     <PageShell>
-      <section className="container-x flex flex-col gap-12 pt-[120px] pb-[60px]">
+      <section className="page-sec container-x flex flex-col gap-8 min-[639.98px]:gap-12">
         <PageHeader badge={SERVICES_PAGE.badge} title={SERVICES_PAGE.title} sub={SERVICES_PAGE.sub} />
 
         {/* the three core services, same cards as the home section */}
-        <div className="grid grid-cols-3 gap-6 max-[809.98px]:grid-cols-1">
+        <div className="grid grid-cols-1 gap-6 min-[639.98px]:grid-cols-2 min-[1100px]:grid-cols-3">
           {SERVICES.map((s) => (
             <div key={s.title} className="flex flex-col rounded-lg bg-mist p-6">
               <Icon id={s.icon} size={36} />
@@ -40,7 +40,7 @@ export default function ServicesPage() {
         </div>
 
         {/* the rest of the list */}
-        <div className="grid grid-cols-3 gap-6 max-[809.98px]:grid-cols-1">
+        <div className="grid grid-cols-1 gap-6 min-[639.98px]:grid-cols-2 min-[1100px]:grid-cols-3">
           {SERVICES_PAGE.extra.map((s) => (
             <div key={s.title} className="flex flex-col gap-4 rounded-lg bg-mist p-6">
               {s.image ? (
@@ -58,9 +58,9 @@ export default function ServicesPage() {
         </div>
 
         {/* what's included + the way over to the planning form */}
-        <div className="flex flex-col gap-8 rounded-lg bg-mist p-8 max-[809.98px]:p-6">
-          <div className="flex items-end justify-between gap-6 max-[809.98px]:flex-col max-[809.98px]:items-start">
-            <div className="flex w-[560px] flex-col gap-2 max-[809.98px]:w-full">
+        <div className="flex flex-col gap-6 rounded-lg bg-mist p-6 min-[639.98px]:p-8">
+          <div className="flex flex-col items-start gap-4 min-[900px]:flex-row min-[900px]:items-end min-[900px]:justify-between min-[900px]:gap-6">
+            <div className="flex w-full min-w-0 flex-col gap-2" style={{ maxWidth: 560 }}>
               <h2 className="t-h3l text-ink">{INCLUDED_SECTION.title.join(" ")}</h2>
               <p className="t-body">{INCLUDED_SECTION.body}</p>
             </div>
@@ -69,7 +69,7 @@ export default function ServicesPage() {
             </a>
           </div>
 
-          <div className="grid grid-cols-4 gap-6 max-[809.98px]:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 min-[639.98px]:grid-cols-2 min-[1100px]:grid-cols-4">
             {FEATURES.map((f) => (
               <div key={f.title} className="flex flex-col gap-2 rounded-lg bg-cream p-4">
                 <Icon id={f.icon} size={30} />

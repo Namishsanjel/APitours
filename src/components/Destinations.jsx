@@ -15,27 +15,27 @@ export default function Destinations() {
           </a>
         </SectionHead>
 
-        <div className="mt-12 flex flex-col gap-12">
+        <div className="mt-8 flex flex-col gap-8 min-[639.98px]:mt-12 min-[639.98px]:gap-12">
           {DESTINATIONS.map((d, i) => (
             <Reveal
               key={d.title}
               delay={stagger(i, 120)}
-              className={`flex items-center gap-16 max-[809.98px]:flex-col max-[809.98px]:items-start max-[809.98px]:gap-6 ${
-                i % 2 === 1 ? "flex-row-reverse" : ""
+              className={`flex flex-col items-start gap-6 min-[900px]:flex-row min-[900px]:items-center min-[900px]:gap-16 ${
+                i % 2 === 1 ? "min-[900px]:flex-row-reverse" : ""
               }`}
             >
               <img
                 src={d.image}
                 alt={d.alt}
                 loading="lazy"
-                className="h-[420px] w-[645px] shrink-0 rounded-lg object-cover max-[809.98px]:h-[240px] max-[809.98px]:w-full"
+                className="h-[240px] w-full shrink-0 rounded-lg object-cover min-[639.98px]:h-[320px] min-[900px]:h-[420px] min-[900px]:w-[645px]"
               />
-              <div className="flex-1 max-[809.98px]:w-full">
+              <div className="w-full min-w-0 flex-1">
                 <Eyebrow>{d.region}</Eyebrow>
                 <h3 className="t-h3l mt-3">
                   <a href={`/destinations/${d.slug}`}>{d.title}</a>
                 </h3>
-                <p className="t-body mt-3 max-w-[470px] max-[809.98px]:max-w-none">{d.body}</p>
+                <p className="t-body mt-3 max-w-[470px]">{d.body}</p>
               </div>
             </Reveal>
           ))}

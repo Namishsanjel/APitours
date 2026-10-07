@@ -19,14 +19,14 @@ const AUTHOR_IMAGE = ABOUT.guides.people.reduce((map, g) => {
 
 function ExploreCard({ post }) {
   return (
-    <a href={post.href} className="relative block h-[503px] overflow-hidden rounded-lg bg-mist p-1">
+    <a href={post.href} className="relative block h-[380px] overflow-hidden rounded-lg bg-mist p-1 min-[639.98px]:h-[503px]">
       <div className="absolute inset-0 overflow-hidden rounded">
         <img src={post.image} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
         <div className="grad-card absolute inset-0" />
         <ImgBlur />
       </div>
       <div className="relative z-10 flex h-full flex-col justify-between p-4">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <span className="chip">{post.tag}</span>
           <span className="chip">{post.read}</span>
         </div>
@@ -54,15 +54,15 @@ export default function BlogDetailPage() {
 
   return (
     <PageShell>
-      <section className="container-x flex flex-col gap-8 pt-[120px]">
+      <section className="container-x flex flex-col gap-8 pt-[120px] max-[1099.98px]:pt-[100px] max-[639.98px]:pt-[88px]">
         <PageHeader title={post.title} sub={post.intro} />
 
-        <div className="relative h-[423px] overflow-hidden rounded-lg bg-mist p-1 max-[809.98px]:h-[280px]">
+        <div className="relative h-[220px] overflow-hidden rounded-lg bg-mist p-1 min-[639.98px]:h-[300px] min-[1100px]:h-[423px]">
           <div className="relative h-full w-full overflow-hidden rounded">
             <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover" />
             <div className="grad-card absolute inset-0" />
             <ImgBlur />
-            <div className="absolute inset-0 z-10 flex gap-2 p-4">
+            <div className="absolute inset-0 z-10 flex flex-wrap gap-2 p-4">
               <span className="chip">{post.tag}</span>
               <span className="chip">{post.read}</span>
               {post.date ? <span className="chip">{post.date}</span> : null}
@@ -72,8 +72,8 @@ export default function BlogDetailPage() {
       </section>
 
       {/* article body + author card */}
-      <section className="container-x flex justify-between gap-8 pb-[60px] pt-12 max-[1099.98px]:flex-col">
-        <div className="flex w-[836px] flex-col gap-8 max-[1099.98px]:w-full">
+      <section className="container-x flex flex-col gap-8 pb-[60px] pt-10 min-[1100px]:flex-row min-[1100px]:justify-between min-[1100px]:pt-12">
+        <div className="flex w-full min-w-0 flex-col gap-8" style={{ maxWidth: 836 }}>
           {post.sections.map((s, i) => (
             <div key={s.heading || i} className="flex flex-col gap-3">
               {s.heading ? <h2 className="t-h5 text-ink">{s.heading}</h2> : null}
@@ -92,7 +92,7 @@ export default function BlogDetailPage() {
         </div>
 
         {author ? (
-          <aside className="flex w-[341px] shrink-0 flex-col gap-4 self-start rounded-lg bg-mist p-5 max-[1099.98px]:w-full">
+          <aside className="flex w-full min-w-0 shrink-0 flex-col gap-4 self-start rounded-lg bg-mist p-5 min-[1100px]:w-[341px]">
             <p className="t-h5 text-ink">About the Author</p>
             <p className="t-body">{author.bio}</p>
             <div className="flex items-center gap-3 border-t border-smoke/30 pt-4">
@@ -108,7 +108,7 @@ export default function BlogDetailPage() {
 
       <section className="container-x flex flex-col gap-6 pb-[60px]">
         <h2 className="t-h3l text-ink">Explore more</h2>
-        <div className="grid grid-cols-3 gap-6 max-[1099.98px]:grid-cols-2 max-[809.98px]:grid-cols-1">
+        <div className="grid grid-cols-1 gap-6 min-[639.98px]:grid-cols-2 min-[1100px]:grid-cols-3">
           {explore.map((p) => (
             <ExploreCard key={p.href} post={p} />
           ))}

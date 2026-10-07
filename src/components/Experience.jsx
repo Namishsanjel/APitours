@@ -14,8 +14,8 @@ export default function Experience() {
           </a>
         </SectionHead>
 
-        <div className="mt-12 grid h-[666px] grid-cols-3 grid-rows-2 gap-x-4 gap-y-6">
-          <div className={`row-span-2 ${cell}`}>
+        <div className="mt-8 grid auto-rows-[220px] grid-cols-1 gap-x-4 gap-y-6 min-[639.98px]:mt-12 min-[639.98px]:grid-cols-2 min-[1100px]:h-[666px] min-[1100px]:auto-rows-auto min-[1100px]:grid-cols-3 min-[1100px]:grid-rows-2">
+          <div className={`${cell} min-[1100px]:row-span-2`}>
             <img src={a.src} alt={a.alt} className="h-full w-full object-cover" />
           </div>
           <div className={cell}>
@@ -24,7 +24,7 @@ export default function Experience() {
           <div className={cell}>
             <img src={c.src} alt={c.alt} className="h-full w-full object-cover" />
           </div>
-          <div className={`col-span-2 ${cell}`}>
+          <div className={`${cell} min-[1100px]:col-span-2`}>
             <img src={d.src} alt={d.alt} className="h-full w-full object-cover" />
           </div>
         </div>

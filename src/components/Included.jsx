@@ -5,7 +5,7 @@ import Icon from "../data/Icon.jsx";
 /** Mist card: icon, heading, one-line description (measured 625/305 x 180). */
 function FeatureCard({ item, className = "" }) {
   return (
-    <div className={`flex h-[180px] flex-col rounded-lg bg-mist p-4 ${className}`}>
+    <div className={`flex min-h-[180px] flex-col rounded-lg bg-mist p-4 ${className}`}>
       <Icon id={item.icon} size={36} />
       <h4 className="t-h4 mt-8">{item.title}</h4>
       <p className="t-body mt-1">{item.body}</p>
@@ -37,16 +37,16 @@ export default function Included() {
           <HeadCopy>{INCLUDED_SECTION.body}</HeadCopy>
         </SectionHead>
 
-        <div className="mt-12 grid grid-cols-2 gap-4">
+        <div className="mt-8 grid grid-cols-1 gap-4 min-[639.98px]:mt-12 min-[900px]:grid-cols-2">
           {/* left half */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 min-[639.98px]:grid-cols-2">
             <FeatureCard item={guiding} />
             <FeatureCard item={gear} />
-            <PhotoCard item={always} className="col-span-2" />
+            <PhotoCard item={always} className="min-[639.98px]:col-span-2" />
           </div>
           {/* right half */}
-          <div className="grid grid-cols-2 gap-4">
-            <PhotoCard item={transfers} className="col-span-2" />
+          <div className="grid grid-cols-1 gap-4 min-[639.98px]:grid-cols-2">
+            <PhotoCard item={transfers} className="min-[639.98px]:col-span-2" />
             <FeatureCard item={meals} />
             <FeatureCard item={groups} />
           </div>

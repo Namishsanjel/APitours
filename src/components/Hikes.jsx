@@ -15,7 +15,7 @@ function HikeCard({ hike, className = "", big = false, index = null }) {
         <img src={hike.image} alt={hike.alt} className="absolute inset-0 h-full w-full object-cover" />
         <div className="grad-card absolute inset-0" />
         <div className="absolute inset-0 flex flex-col justify-between p-4">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {hike.chips.map((c) => (
               <span key={c} className="chip">
                 {c}
@@ -55,11 +55,13 @@ export default function Hikes() {
           </a>
         </SectionHead>
 
-        <div className="mt-12 grid h-[600px] grid-cols-3 grid-rows-2 gap-4">
-          <HikeCard hike={a} big index={0} className="row-span-2" />
+        {/* desktop keeps the measured 3 x 2 mosaic (600px tall); narrower screens
+            fall back to equal-height cards that wrap to 2 then 1 columns. */}
+        <div className="mt-12 grid auto-rows-[320px] grid-cols-1 gap-4 min-[639.98px]:grid-cols-2 min-[1100px]:h-[600px] min-[1100px]:auto-rows-auto min-[1100px]:grid-cols-3 min-[1100px]:grid-rows-2">
+          <HikeCard hike={a} big index={0} className="min-[1100px]:row-span-2" />
           <HikeCard hike={b} index={1} />
           <HikeCard hike={c} index={2} />
-          <HikeCard hike={d} index={3} className="col-span-2" />
+          <HikeCard hike={d} index={3} className="min-[1100px]:col-span-2" />
         </div>
       </div>
     </section>

@@ -6,9 +6,9 @@ export default function HowItWorks() {
 
   return (
     <section className="section-py">
-      <div className="container-x flex justify-between">
+      <div className="container-x flex flex-col gap-8 min-[1100px]:flex-row min-[1100px]:justify-between min-[1100px]:gap-6">
         {/* left column — badge/h2 sit 10px lower here than in other sections */}
-        <div className="w-[420px]">
+        <div className="w-full min-w-0" style={{ maxWidth: 420 }}>
           <Eyebrow>{badge}</Eyebrow>
           <h2 className="t-h2 mt-[18px]">
             {title.map((line) => (
@@ -24,13 +24,13 @@ export default function HowItWorks() {
         </div>
 
         {/* right column — four step cards */}
-        <div className="flex w-[798px] flex-col gap-6">
+        <div className="flex w-full min-w-0 flex-col gap-6" style={{ maxWidth: 798 }}>
           {STEPS.map((s) => (
-            <div key={s.n} className="flex h-[128px] gap-9 rounded-lg bg-mist p-6">
+            <div key={s.n} className="flex min-h-[128px] gap-6 rounded-lg bg-mist p-6 min-[639.98px]:gap-9">
               <span className="w-[36px] shrink-0 pt-1 text-center font-body text-[20px] leading-[28px] font-medium text-ink">
                 {s.n}
               </span>
-              <div className="flex-1">
+              <div className="min-w-0 flex-1">
                 <h4 className="t-h4">{s.title}</h4>
                 <p className="t-body mt-1">{s.body}</p>
               </div>

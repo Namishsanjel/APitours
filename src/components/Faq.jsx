@@ -24,11 +24,11 @@ function CloseIcon() {
 }
 
 /** The accordion column alone — reused by the FAQ page. */
-export function FaqList({ className = "w-[798px] max-[809.98px]:w-full" }) {
+export function FaqList({ className = "w-full min-w-0" }) {
   const [open, setOpen] = useState(0);
 
   return (
-    <div className={`flex flex-col gap-4 [will-change:transform] ${className}`}>
+    <div className={`flex flex-col gap-4 [will-change:transform] ${className}`} style={{ maxWidth: 798 }}>
       {FAQS.map((f, i) => {
         const isOpen = open === i;
         return (
@@ -39,10 +39,10 @@ export function FaqList({ className = "w-[798px] max-[809.98px]:w-full" }) {
             <button
               type="button"
               onClick={() => setOpen(isOpen ? -1 : i)}
-              className="block w-full pr-10 text-left"
+              className="block w-full cursor-pointer pr-10 text-left"
               aria-expanded={isOpen}
             >
-              <h5 className="t-h5 w-4/5">{f.q}</h5>
+              <h5 className="t-h5 w-full sm:w-4/5">{f.q}</h5>
             </button>
 
             {/* answer collapses to zero height instead of unmounting, so it
@@ -63,7 +63,7 @@ export function FaqList({ className = "w-[798px] max-[809.98px]:w-full" }) {
               type="button"
               onClick={() => setOpen(isOpen ? -1 : i)}
               aria-label={isOpen ? "Close" : "Open"}
-              className="absolute right-[11px] top-[11px] text-ink"
+              className="absolute right-[11px] top-[11px] cursor-pointer text-ink"
             >
               {/* plus and close share one centre: each cross-fades in place */}
               <span className="relative block h-[34px] w-[34px]">
@@ -95,9 +95,9 @@ export default function Faq({ showCta = true }) {
 
   return (
     <section id="faq" className="section-py faq-sec">
-      <div className="container-x flex justify-between max-[809.98px]:flex-col max-[809.98px]:gap-8">
+      <div className="container-x flex flex-col gap-8 min-[1100px]:flex-row min-[1100px]:justify-between min-[1100px]:gap-6">
         {/* left column */}
-        <div className="w-[420px] max-[809.98px]:w-full">
+        <div className="w-full min-w-0" style={{ maxWidth: 420 }}>
           <Eyebrow>{badge}</Eyebrow>
           <h2 className="t-h2 mt-2">
             {title.map((line) => (

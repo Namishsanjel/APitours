@@ -7,9 +7,9 @@ export default function Services() {
 
   return (
     <section id="services" className="section-py">
-      <div className="container-x flex justify-between max-[809.98px]:flex-col max-[809.98px]:gap-8">
+      <div className="container-x flex flex-col gap-8 min-[1100px]:flex-row min-[1100px]:justify-between min-[1100px]:gap-6">
         {/* left column — badge/h2 sit 10px lower here than in other sections */}
-        <div className="w-[420px] max-[809.98px]:w-full">
+        <div className="w-full min-w-0" style={{ maxWidth: 420 }}>
           <Eyebrow>{badge}</Eyebrow>
           <h2 className="t-h2 mt-[18px]">
             {title.map((line) => (
@@ -28,7 +28,7 @@ export default function Services() {
         </div>
 
         {/* right column — three service cards (Visas / Air Ticketing / Hotel Booking) */}
-        <div className="grid w-[798px] grid-cols-3 gap-6 max-[809.98px]:w-full max-[809.98px]:grid-cols-1">
+        <div className="grid w-full min-w-0 grid-cols-1 gap-6 min-[639.98px]:grid-cols-2 min-[1100px]:grid-cols-3" style={{ maxWidth: 798 }}>
           {SERVICES.map((s) => (
             <div key={s.title} className="flex flex-col rounded-lg bg-mist p-6">
               <Icon id={s.icon} size={36} />

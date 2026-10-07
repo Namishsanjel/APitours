@@ -11,14 +11,14 @@ export default function TourCard({ tour, index = null }) {
   return (
     <div
       {...rv}
-      className="rv relative h-[600px] rounded-lg bg-mist p-1 [will-change:transform]"
+      className="rv relative h-[380px] rounded-lg bg-mist p-1 [will-change:transform] min-[900px]:h-[600px]"
     >
       <div className="relative h-full w-full overflow-hidden rounded">
         <img src={tour.image} alt={tour.alt} className="absolute inset-0 h-full w-full object-cover" />
         <div className="grad-card absolute inset-0" />
         <ImgBlur />
         <div className="absolute inset-0 z-10 flex flex-col justify-between p-4">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {tour.chips.map((c) => (
               <span key={c} className="chip">
                 {c}

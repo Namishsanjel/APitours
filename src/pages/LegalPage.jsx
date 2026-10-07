@@ -40,12 +40,12 @@ export default function LegalPage({ doc }) {
 
   return (
     <PageShell faq={false}>
-      <section className="container-x flex flex-col gap-12 pt-[120px] pb-[60px]">
+      <section className="page-sec container-x flex flex-col gap-8 min-[639.98px]:gap-12">
         <PageHeader badge="Legal Page" title={doc.title} />
 
-        <div className="flex items-start gap-12 max-[1099.98px]:flex-col">
+        <div className="flex flex-col items-start gap-8 min-[1100px]:flex-row min-[1100px]:items-start min-[1100px]:gap-12">
           {/* table of contents */}
-          <nav className="flex w-[300px] shrink-0 flex-col gap-2 max-[1099.98px]:w-full">
+          <nav className="flex w-full shrink-0 flex-col gap-2 min-[1100px]:w-[300px]">
             <p className="t-h5 text-ink">Table of contents</p>
             <div className="flex flex-col gap-1">
               {heads.map((s, i) => (
@@ -64,11 +64,11 @@ export default function LegalPage({ doc }) {
           </nav>
 
           {/* document body */}
-          <div className="flex w-[866px] flex-col gap-10 max-[1099.98px]:w-full">
+          <div className="flex w-full min-w-0 flex-col gap-10" style={{ maxWidth: 866 }}>
             {doc.sections.map((s) =>
               s.heading ? (
-                <div key={s.heading} id={slugify(s.heading)} className="flex scroll-mt-6 flex-col gap-3">
-                  <h2 className="t-h3s text-[28px] leading-[34px] text-ink">{s.heading}</h2>
+                <div key={s.heading} id={slugify(s.heading)} className="flex scroll-mt-28 flex-col gap-3">
+                  <h2 className="t-h3s text-[clamp(21px,2.4vw,28px)] leading-[1.2] text-ink">{s.heading}</h2>
                   {s.paragraphs.map((p) => (
                     <p key={p} className="t-body">
                       {p}
@@ -87,8 +87,8 @@ export default function LegalPage({ doc }) {
             )}
 
             {doc.slug === "terms-of-service" ? (
-              <div className="flex items-center justify-between gap-6 rounded-lg bg-mist p-6 max-[809.98px]:flex-col max-[809.98px]:items-start">
-                <div className="flex flex-col gap-1">
+              <div className="flex flex-col items-start gap-4 rounded-lg bg-mist p-6 min-[900px]:flex-row min-[900px]:items-center min-[900px]:justify-between min-[900px]:gap-6">
+                <div className="flex min-w-0 flex-col gap-1">
                   <p className="t-h5 text-ink">Cancellation &amp; Refund Policy</p>
                   <p className="t-body">The windows, percentages and date-change rules in one place.</p>
                 </div>

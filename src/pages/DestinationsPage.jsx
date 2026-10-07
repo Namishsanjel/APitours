@@ -15,7 +15,7 @@ export default function DestinationsPage() {
 
   return (
     <PageShell>
-      <section className="container-x flex flex-col gap-12 pt-[120px] pb-[60px]">
+      <section className="page-sec container-x flex flex-col gap-8 min-[639.98px]:gap-12">
         <PageHeader badge={DESTINATIONS_PAGE.badge} title={DESTINATIONS_PAGE.title} sub={DESTINATIONS_PAGE.sub} />
 
         {DESTINATIONS_PAGE.groups.map((group) => {
@@ -30,7 +30,7 @@ export default function DestinationsPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-3 gap-6 max-[1099.98px]:grid-cols-2 max-[809.98px]:grid-cols-1">
+              <div className="grid grid-cols-1 gap-6 min-[639.98px]:grid-cols-2 min-[1100px]:grid-cols-3">
                 {list.map((d) => (
                   <a
                     key={d.slug}
@@ -42,7 +42,7 @@ export default function DestinationsPage() {
                       <div className="grad-card absolute inset-0" />
                       <ImgBlur />
                       <div className="absolute inset-0 z-10 flex flex-col justify-between p-4">
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                           <span className="chip">{d.region}</span>
                         </div>
                         <div className="flex flex-col gap-3">
@@ -58,8 +58,8 @@ export default function DestinationsPage() {
           );
         })}
 
-        <div className="flex items-center justify-between gap-6 rounded-lg bg-mist p-6 max-[809.98px]:flex-col max-[809.98px]:items-start">
-          <div className="flex flex-col gap-1">
+        <div className="flex flex-col items-start gap-4 rounded-lg bg-mist p-6 min-[639.98px]:flex-row min-[639.98px]:items-center min-[639.98px]:justify-between">
+          <div className="flex min-w-0 flex-col gap-1">
             <p className="t-h4 text-ink">Ready to pick a route?</p>
             <p className="t-body">Every destination above has at least one tour we run ourselves.</p>
           </div>
