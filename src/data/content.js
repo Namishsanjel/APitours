@@ -7,7 +7,7 @@
 export const IMG = {
   logo: "/logo-white.png",
   logoDark: "/logo.png",
-  hero: "/img/PnKFFZTDtprKUgpnJfcXRmdKbw-dc3b93.png",
+  hero: "/img/hero.jpg",
   contact: "/img/SKEOxyccXWzDnPBCqes8OKxWFE-36b270.jpg",
   about: "/img/JlclD7cUSGbFs5da7U2YZ0Jfo-e3f5d8.png",
   polaroid1: "/img/STbQ0TTQSrsZiFejlw0ISo8f8Cg-d589c2.png",
@@ -20,7 +20,7 @@ export const IMG = {
   testimonial: "/img/Lb7a9F2Y442x6WewlTOqDC6JVF0-784858.png",
   avatar1: "/img/Tb2IyWFVhCYJMmLVbyfHF949LoQ-cd2d3e.png",
   avatar2: "/img/rminNLvD1Ra33ajEBBIbdkyDw-cd2d3e.png",
-  footer: "/img/tbrfdtrrgntbKXktgPNJCVV5rI-dc3b93.png",
+  footer: "/img/footer.jpg",
 };
 
 export const CONTACT = {
@@ -143,7 +143,7 @@ export const HERO = {
   ctaHref: "/tours",
   sub: "Guided expeditions to wild peaks, hidden coastlines, and forests few ever reach.",
   image: IMG.hero,
-  imageAlt: "Traveller overlooking a mountain route, repr",
+  imageAlt: "Traveller overlooking a coastal bay and mountains at golden hour",
 };
 
 export const ABOUT = {
@@ -408,7 +408,7 @@ export const FOOTER = {
   cta: "Explore Tours",
   ctaHref: "/tours",
   background: IMG.footer,
-  backgroundAlt: "Scenic mountain route background in the ",
+  backgroundAlt: "Traveller resting on a mountain path with a backpack",
   subline: "Guided tours, breathtaking destinations, and unforgettable moments—all thoughtfully crafted in one place.",
   copyright: "© 2026 API Touch",
   columns: [

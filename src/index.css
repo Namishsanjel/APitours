@@ -339,12 +339,17 @@
 
   /* ---------- gradients (measured from the original) ---------- */
 
+  /* Hero scrim. The top half matches the original's measured stops; the
+     bottom half is deeper and starts earlier because the current hero photo
+     is a bright sunlit landscape, and the light-on-photo hero copy sits over
+     the bottom third of it. */
   .grad-hero {
     background-image: linear-gradient(
       rgba(10, 18, 12, 0.55) 0%,
       rgba(10, 18, 12, 0) 38%,
-      rgba(8, 14, 10, 0.35) 70%,
-      rgba(6, 12, 8, 0.78) 100%
+      rgba(8, 14, 10, 0.3) 58%,
+      rgba(6, 12, 8, 0.64) 78%,
+      rgba(4, 9, 6, 0.88) 100%
     );
   }
 
