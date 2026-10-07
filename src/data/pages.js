@@ -42,33 +42,40 @@ export const ABOUT = {
   },
 };
 
-// 3-column masonry; every image renders 406px wide with an exact
-// aspect ratio (width/height of the source file).
+// 3-column masonry; every image renders at its column's width with an exact
+// aspect ratio (width/height of the file), which is what balances the columns.
+// The photos are the originals in /gallery, re-encoded for the web by
+// apply-gallery-photos.ps1 (long edge 1600px, JPEG q82) and packed
+// shortest-column-first so all three columns come out the same height.
 export const GALLERY = {
   badge: "Gallery",
   title: "Explore the Journey",
   sub: "A collection of breathtaking landscapes, meaningful moments, and unforgettable adventures waiting to inspire your next escape.",
   columns: [
     [
-      { src: "/img/zFAVjhAqdjFpMrm7nOAQjbHChM4-339e70.jpg", w: 896, h: 1152 },
-      { src: "/img/8DnPG0ky3Fo13hEsc80rfleWmo-c769c1.jpg", w: 1024, h: 1024 },
-      { src: "/img/FQzqMGdBoJbKxHELrjbP1GPe0-3d84e1.jpg", w: 1248, h: 832 },
-      { src: "/img/60ioZwOh48dho1umQUVMdKewdE-3d84e1.jpg", w: 1248, h: 832 },
-      { src: "/img/GPSrigAgoEU2OU15Meoz77ziUw-e37b9d.jpg", w: 864, h: 1184 },
+      { src: "/img/gallery/01.jpg", w: 1600, h: 1067 },
+      { src: "/img/gallery/02.jpg", w: 1600, h: 1067 },
+      { src: "/img/gallery/03.jpg", w: 950, h: 1600 },
+      { src: "/img/gallery/04.jpg", w: 1600, h: 1068 },
+      { src: "/img/gallery/05.jpg", w: 1600, h: 1200 },
+      { src: "/img/gallery/06.jpg", w: 1600, h: 1067 },
+      { src: "/img/gallery/07.jpg", w: 1600, h: 900 },
     ],
     [
-      { src: "/img/H20t2UlF1HbZXncGKwHUyCazPwk-c769c1.jpg", w: 1024, h: 1024 },
-      { src: "/img/Y4I3ptD9YsDTo6Vc4GeLFGL2zZc-3d84e1.jpg", w: 1248, h: 832 },
-      { src: "/img/4WzHoyuQG37PnUyvBbKtaU700-e37b9d.jpg", w: 864, h: 1184 },
-      { src: "/img/k9MkvI8xpUyM88mrQELcYQxInw-c769c1.jpg", w: 1024, h: 1024 },
-      { src: "/img/bUA57OR2II2k1PqzhTWRuyCnbG4-3d84e1.jpg", w: 1248, h: 832 },
+      { src: "/img/gallery/08.jpg", w: 1600, h: 1200 },
+      { src: "/img/gallery/09.jpg", w: 1274, h: 1600 },
+      { src: "/img/gallery/10.jpg", w: 1600, h: 1067 },
+      { src: "/img/gallery/11.jpg", w: 900, h: 1600 },
+      { src: "/img/gallery/12.jpg", w: 1600, h: 1067 },
+      { src: "/img/gallery/13.jpg", w: 1600, h: 1067 },
     ],
     [
-      { src: "/img/v5nyoTWBMfBB1GntKSZQ2HCIAs-3d84e1.jpg", w: 1248, h: 832 },
-      { src: "/img/BxJl4MaoPNuSYUlgMaFRVKrg8vU-e37b9d.jpg", w: 864, h: 1184 },
-      { src: "/img/18kyoMAcCeYvr7BH5NVvlliRb8-3d84e1.jpg", w: 1248, h: 832 },
-      { src: "/img/pfGyVHz52nccDlKhYabvnbBgs-c769c1.jpg", w: 1024, h: 1024 },
-      { src: "/img/BGyQPO8SFCsl7zAOogdRQG3Rtg-3d84e1.jpg", w: 1248, h: 832 },
+      { src: "/img/gallery/14.jpg", w: 1600, h: 1067 },
+      { src: "/img/gallery/15.jpg", w: 1200, h: 1600 },
+      { src: "/img/gallery/16.jpg", w: 1067, h: 1600 },
+      { src: "/img/gallery/17.jpg", w: 1600, h: 1067 },
+      { src: "/img/gallery/18.jpg", w: 1280, h: 1600 },
+      { src: "/img/gallery/19.jpg", w: 1600, h: 1067 },
     ],
   ],
 };
