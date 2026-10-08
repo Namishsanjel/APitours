@@ -148,8 +148,16 @@ export default function TourDetailPage() {
           </div>
         </div>
 
-        {/* booking card: photo, trip facts, price and the booking CTA */}
-        <aside className="flex w-full min-w-0 shrink-0 flex-col gap-5 self-start rounded-lg bg-mist p-6 min-[1100px]:w-[470px]">
+        {/* booking card: photo, trip facts, price and the booking CTA.
+
+            Sticky from 1100px up, where it is the sidebar beside the itinerary
+            column: it rides down as that column scrolls past instead of
+            scrolling off. The section above is its containing block, so the
+            card lets go at that section's bottom edge — it parks just above
+            "More Tours to Explore" rather than following it down the page.
+            Below 1100px the card stacks under the copy with nothing beside it,
+            so it stays in flow. */}
+        <aside className="flex w-full min-w-0 shrink-0 flex-col gap-5 self-start rounded-lg bg-mist p-6 min-[1100px]:sticky min-[1100px]:top-6 min-[1100px]:w-[470px]">
           <div className="h-[170px] overflow-hidden rounded-lg">
             <img src={tour.image} alt="" className="h-full w-full object-cover" />
           </div>
