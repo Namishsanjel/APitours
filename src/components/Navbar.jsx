@@ -72,7 +72,7 @@ function DestinationsMenu({ onNavigate }) {
 
   return (
     <div id="nav-destinations-menu" className="absolute inset-x-0 top-full hidden min-[1024px]:block">
-      <div className="menu-in flex max-h-[calc(100dvh-92px)] flex-col gap-5 overflow-y-auto overscroll-contain rounded-b-lg bg-white p-6 shadow-[0_30px_70px_-30px_rgba(6,12,8,0.55)]">
+      <div className="menu-in flex max-h-[calc(100dvh-92px)] flex-col gap-5 overflow-y-auto overscroll-contain rounded-b-lg bg-cream p-6">
         <div className="flex gap-5">
           <nav className="flex w-[260px] shrink-0 flex-col min-[1100px]:w-[360px]">
             {groups.flat().map((d) => (
@@ -84,13 +84,13 @@ function DestinationsMenu({ onNavigate }) {
                 onFocus={() => setActive(d.slug)}
                 aria-current={d.slug === current.slug ? "true" : undefined}
                 className={`flex flex-1 items-center justify-between gap-3 rounded-lg px-3 transition-colors ${
-                  d.slug === current.slug ? "bg-mist" : "hover:bg-mist/60"
+                  d.slug === current.slug ? "bg-mist" : "hover:bg-mist"
                 }`}
               >
-                <span className={`t-h5 min-w-0 truncate ${d.slug === current.slug ? "text-primary" : "text-ink"}`}>
+                <span className={`t-h6 min-w-0 truncate ${d.slug === current.slug ? "text-primary" : "text-ink"}`}>
                   {d.name}
                 </span>
-                <span className="t-eyebrow shrink-0 text-smoke">{areaOf(d)}</span>
+                <span className="t-eyebrow-s shrink-0 text-smoke">{areaOf(d)}</span>
               </a>
             ))}
           </nav>
@@ -169,7 +169,7 @@ function PackagesMenu({ onNavigate }) {
 
   return (
     <div id="nav-packages-menu" className="absolute inset-x-0 top-full hidden min-[1024px]:block">
-      <div className="menu-in flex max-h-[calc(100dvh-92px)] flex-col gap-5 overflow-y-auto overscroll-contain rounded-b-lg bg-white p-6 shadow-[0_30px_70px_-30px_rgba(6,12,8,0.55)]">
+      <div className="menu-in flex max-h-[calc(100dvh-92px)] flex-col gap-5 overflow-y-auto overscroll-contain rounded-b-lg bg-cream p-6">
         <div className="flex gap-5">
           <nav className="flex w-[260px] shrink-0 flex-col min-[1100px]:w-[360px]">
             {groups.flat().map((p) => (
@@ -181,13 +181,13 @@ function PackagesMenu({ onNavigate }) {
                 onFocus={() => setActive(p.slug)}
                 aria-current={p.slug === current.slug ? "true" : undefined}
                 className={`flex flex-1 items-center justify-between gap-3 rounded-lg px-3 transition-colors ${
-                  p.slug === current.slug ? "bg-mist" : "hover:bg-mist/60"
+                  p.slug === current.slug ? "bg-mist" : "hover:bg-mist"
                 }`}
               >
-                <span className={`t-h5 min-w-0 truncate ${p.slug === current.slug ? "text-primary" : "text-ink"}`}>
+                <span className={`t-h6 min-w-0 truncate ${p.slug === current.slug ? "text-primary" : "text-ink"}`}>
                   {p.title}
                 </span>
-                <span className="t-eyebrow shrink-0 text-smoke">{p.chips[1]}</span>
+                <span className="t-eyebrow-s shrink-0 text-smoke">{p.chips[1]}</span>
               </a>
             ))}
           </nav>
@@ -231,7 +231,7 @@ function MobileMenu({ open, onNavigate }) {
 
   return (
     <div id="nav-mobile-menu" className="absolute inset-x-0 top-full min-[1024px]:hidden">
-      <div className="menu-in flex max-h-[calc(100dvh-84px)] flex-col overflow-y-auto overscroll-contain rounded-b-lg bg-white p-4 shadow-[0_30px_70px_-30px_rgba(6,12,8,0.55)] min-[1024px]:max-h-[calc(100dvh-92px)]">
+      <div className="menu-in flex max-h-[calc(100dvh-84px)] flex-col overflow-y-auto overscroll-contain rounded-b-lg bg-cream p-4 min-[1024px]:max-h-[calc(100dvh-92px)]">
         <nav className="flex flex-col">
           {NAV_LINKS.map((l) => {
             const isGroup = Boolean(l.menu && MENUS[l.menu]);
@@ -301,8 +301,20 @@ function MobileMenu({ open, onNavigate }) {
 }
 
 /**
- * variant "light" (default): light links + white logo — over the hero image (home).
- * variant "dark": ink links + dark logo — on the cream page background (inner pages).
+ * The bar carries no fill while it sits over a photo: variant "light" (default)
+ * leaves it transparent so the hero runs unbroken behind it, with the white
+ * logo and light links the dark photo needs to read.
+ *
+ * variant "dark", and any bar with a panel open, switches to the page
+ * background colour instead — on the cream pages that is the same cream the
+ * body already is, and over the hero it is the panel's own cream, so bar and
+ * panel meet with no seam.
+ *
+ * Nothing here casts a shadow. A drop shadow is what stops this from actually
+ * matching the background: it darkened the cream around the bar, and each
+ * panel's shadow fell upward onto the bar, so opening a menu tinted the bar
+ * off-colour. The bar is separated from the hero photo by the photo itself,
+ * and on the cream pages it is meant to disappear into them.
  */
 export default function Navbar({ variant = "light" }) {
   const dark = variant === "dark";
@@ -320,8 +332,8 @@ export default function Navbar({ variant = "light" }) {
 
   const open = openMenu !== null;
 
-  // the open panel is white all the way up, so the bar switches to the cream
-  // page's colours (dark logo, ink links) instead of the light-on-photo ones
+  // the open panel is cream all the way up, so the bar fills to match it —
+  // and swaps to the cream page's colours (dark logo, ink links) with it
   const solid = dark || open || mobileOpen;
   const logo = solid ? IMG.logoDark : IMG.logo;
   const link = solid ? "text-ink hover:text-primary" : "text-mist hover:text-sage";
@@ -385,7 +397,7 @@ export default function Navbar({ variant = "light" }) {
       <div
         ref={shell}
         className={`container-x relative flex items-center ${
-          solid ? "rounded-t-lg bg-white shadow-[0_30px_70px_-30px_rgba(6,12,8,0.55)]" : ""
+          solid ? "rounded-t-lg bg-cream" : ""
         } h-[76px] max-[1023.98px]:h-[68px]`}
         onMouseLeave={close}
         onBlur={(e) => {

@@ -106,7 +106,7 @@ export default function PlanTripPage() {
 
             <div className="contact-right">
               <form
-                className="flex w-full min-w-0 flex-col rounded-lg bg-mist p-6"
+                className="flex w-full min-w-0 flex-col rounded-lg bg-cream p-6"
                 style={{ maxWidth: 520 }}
                 onSubmit={(e) => e.preventDefault()}
               >

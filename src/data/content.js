@@ -135,6 +135,7 @@ export const NAV_LINKS = [
   { label: "Our Package", href: "/tours", menu: "packages" },
   { label: "Gallery", href: "/gallery" },
   { label: "Blog", href: "/blog" },
+  { label: "Contact", href: "/contact" },
 ];
 export const HERO = {
   eyebrow: "Global Expeditions · Est. Wild",

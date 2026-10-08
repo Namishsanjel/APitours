@@ -224,6 +224,24 @@
     letter-spacing: -0.008em;
   }
 
+  /* one step under t-h5 — the nav mega-menu lists, where a full h5 per row
+     pushed the name and its area/duration apart */
+  .t-h6 {
+    font-family: var(--font-display);
+    font-size: clamp(14px, 1.2vw, 15px);
+    line-height: 1.4;
+    font-weight: 500;
+    letter-spacing: -0.006em;
+  }
+
+  /* the nav lists' trailing meta (area, duration) — a shade under t-eyebrow */
+  .t-eyebrow-s {
+    font-family: var(--font-body);
+    font-size: 13px;
+    line-height: 15.6px;
+    font-weight: 400;
+  }
+
   .t-body {
     font-family: var(--font-body);
     font-size: 16px;
@@ -529,7 +547,9 @@
     box-sizing: border-box;
     border: 0;
     border-radius: 8px;
-    background: var(--color-cream);
+    /* the form card is cream (the page background), so the fields inside it
+       sit on mist to keep a fill of their own */
+    background: var(--color-mist);
     font-family: var(--font-body);
     font-size: 16px;
     line-height: 22.4px;
