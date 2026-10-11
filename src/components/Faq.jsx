@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { FAQ_SECTION, FAQS } from "../data/content.js";
 import { Eyebrow } from "./ui.jsx";
+import Blocks from "./Blocks.jsx";
+import { useStrapiList, hasContent } from "../lib/strapiData.jsx";
 
 function PlusIcon() {
   return (
@@ -23,17 +25,28 @@ function CloseIcon() {
   );
 }
 
-/** The accordion column alone — reused by the FAQ page. */
+/**
+ * The accordion column alone — reused by the FAQ page.
+ *
+ * Questions come from Strapi when it has any; the answer is then a blocks
+ * field rendered through the site type tokens. With no CMS entries the original
+ * five question/answer strings are used, so the block is never empty.
+ */
 export function FaqList({ className = "w-full min-w-0" }) {
   const [open, setOpen] = useState(0);
+  const { items } = useStrapiList("faqs?sort=order:asc");
+
+  const entries = hasContent(items)
+    ? items.map((f) => ({ key: f.documentId ?? f.id ?? f.question, q: f.question, a: f.answer }))
+    : FAQS.map((f) => ({ key: f.q, q: f.q, a: f.a }));
 
   return (
     <div className={`flex flex-col gap-4 [will-change:transform] ${className}`} style={{ maxWidth: 798 }}>
-      {FAQS.map((f, i) => {
+      {entries.map((f, i) => {
         const isOpen = open === i;
         return (
           <div
-            key={f.q}
+            key={f.key}
             className="relative min-h-[61px] rounded-lg bg-mist p-4 [will-change:transform]"
           >
             <button
@@ -53,9 +66,14 @@ export function FaqList({ className = "w-full min-w-0" }) {
               }`}
             >
               <div className="overflow-hidden">
-                <p className={`t-body mt-2 transition-opacity duration-200 ${isOpen ? "opacity-100" : "opacity-0"}`}>
-                  {f.a}
-                </p>
+                <div className={`transition-opacity duration-200 ${isOpen ? "opacity-100" : "opacity-0"}`}>
+                  {/* Strapi answers are blocks; the hardcoded ones are strings */}
+                  {Array.isArray(f.a) ? (
+                    <Blocks content={f.a} className="mt-2" />
+                  ) : (
+                    <p className="t-body mt-2">{f.a}</p>
+                  )}
+                </div>
               </div>
             </div>
 

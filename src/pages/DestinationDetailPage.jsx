@@ -1,10 +1,12 @@
-import { useEffect } from "react";
 import PageShell from "../components/PageShell.jsx";
 import { PageHeader } from "../components/ui.jsx";
 import TourCard from "../components/TourCard.jsx";
 import DestinationsPage from "./DestinationsPage.jsx";
 import { DESTINATIONS_ALL } from "../data/newPages.js";
 import { HIKES_ALL } from "../data/hikes.js";
+import JsonLd from "../components/JsonLd.jsx";
+import { breadcrumbJsonLd, destinationBreadcrumbs } from "../lib/jsonld.js";
+import { usePageMeta } from "../lib/seo.js";
 
 function FactList({ title, items }) {
   return (
@@ -26,16 +28,19 @@ export default function DestinationDetailPage() {
   const slug = window.location.pathname.split("/").filter(Boolean).pop() ?? "";
   const dest = DESTINATIONS_ALL.find((d) => d.slug === slug);
 
-  useEffect(() => {
-    document.title = `${dest ? dest.name : "Destination"} — API Touch`;
-  }, [dest]);
+  usePageMeta({
+    title: `${dest ? dest.name : "Destination"} — API Touch`,
+    description: dest ? dest.body : null,
+  });
 
   if (!dest) return <DestinationsPage />;
 
   const tours = HIKES_ALL.filter((h) => dest.tours.includes(h.slug));
+  const breadcrumbSchema = breadcrumbJsonLd(destinationBreadcrumbs(dest.name, dest.slug));
 
   return (
     <PageShell>
+      <JsonLd id="jsonld-breadcrumb-destination" data={breadcrumbSchema} />
       <section className="container-x flex flex-col gap-6 pt-[120px] max-[1099.98px]:pt-[100px] max-[639.98px]:pt-[88px]">
         <PageHeader badge={dest.region} title={dest.name} sub={dest.body} />
         <img src={dest.image} alt={dest.alt} className="h-[240px] w-full rounded-lg object-cover min-[639.98px]:h-[320px] min-[1100px]:h-[420px]" />

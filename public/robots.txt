@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Add the production sitemap line once the canonical domain is set, e.g.
+# Sitemap: https://<your-domain>/sitemap.xml

@@ -1,5 +1,16 @@
 // Homepage content extracted from the rendered mirror
 // (http://localhost:8091/trova-travel.framer.website/index.html).
+// The site's canonical origin. No production domain is defined anywhere in
+// this project yet, so it falls back to the origin the app is served from at
+// runtime (dev, preview, or whatever domain it finally ships to). A build can
+// pin the real origin without a code change:
+//   VITE_SITE_ORIGIN=https://www.your-domain.com npm run build
+// Only define it here — every consumer must import it from this file.
+export const SITE_URL = (
+  (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_SITE_ORIGIN) ||
+  (typeof window !== "undefined" ? window.location.origin : "")
+).replace(/\/+$/, "");
+
 // Image URLs are the canonical post-hydration framerusercontent.com URLs.
 // CMS-backed cards (hikes / experience / journal) all resolve to one picsum
 // seed in the hydrated DOM, so that single seed is used for every one of them.
@@ -417,6 +428,7 @@ export const FOOTER = {
       { label: "Home", href: "/" },
       { label: "About", href: "/about" },
       { label: "Contact", href: "/contact" },
+      { label: "Our team", href: "/about#our-guides" },
     ] },
     { label: "CMS", links: [
       { label: "Tours", href: "/tours" },
@@ -426,6 +438,8 @@ export const FOOTER = {
     { label: "Legal page", links: [
       { label: "Privacy Policy", href: "/privacy-policy" },
       { label: "Terms Of Service", href: "/terms-of-service" },
+      { label: "Cancellation Policy", href: "/cancellation-refund" },
+      { label: "Legal doc", href: null },
     ] },
     // `href: null` marks a link whose destination does not exist yet — the
     // footer renders it as a disabled placeholder instead of a live anchor.
@@ -433,6 +447,8 @@ export const FOOTER = {
       { label: "Facebook", href: null },
       { label: "Instagram", href: null },
       { label: "YouTube", href: null },
+      { label: "LinkedIn", href: null },
+      { label: "TikTok", href: null },
     ] },
   ],
 };

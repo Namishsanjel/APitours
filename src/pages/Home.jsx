@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { PAGES } from "../data/content.js";
 import Navbar from "../components/Navbar.jsx";
 import Hero from "../components/Hero.jsx";
 import About from "../components/About.jsx";
@@ -14,6 +15,8 @@ import Footer from "../components/Footer.jsx";
 export default function Home() {
   useEffect(() => {
     document.title = "API Touch — Guided Tours & Vacations";
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute("content", PAGES["/"].description);
   }, []);
 
   return (

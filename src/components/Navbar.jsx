@@ -5,6 +5,7 @@ import { HIKES_ALL, HIKES_PAGE } from "../data/hikes.js";
 import { TOUR_DETAILS } from "../data/tourDetails.js";
 import { ImgBlur } from "./ui.jsx";
 import { useReveal } from "../motion.js";
+import { useGlobal, imageOf } from "../lib/strapiData.jsx";
 
 /** The 11x7 chevron the booking form's select already uses, pointed down. */
 function ChevronDown({ className = "" }) {
@@ -335,7 +336,20 @@ export default function Navbar({ variant = "light" }) {
   // the open panel is cream all the way up, so the bar fills to match it —
   // and swaps to the cream page's colours (dark logo, ink links) with it
   const solid = dark || open || mobileOpen;
-  const logo = solid ? IMG.logoDark : IMG.logo;
+
+  // Strapi's global entry owns the name and the logos. Two slots, because the
+  // bar needs one that reads over a photo and one that reads on cream:
+  //   global.logo     -> transparent bar sitting over the hero photo
+  //   global.logoDark -> the bar turned solid (cream panel / page background)
+  // A site that only fills one still works: the other falls back to it, and
+  // with neither published the original file pair in content.js does.
+  const global = useGlobal();
+  const siteName = global?.siteName || "API Touch";
+  const photoLogo = imageOf(global?.logo, siteName);
+  const panelLogo = imageOf(global?.logoDark, siteName) ?? photoLogo;
+  const logo = solid
+    ? panelLogo?.src || IMG.logoDark
+    : photoLogo?.src || IMG.logo;
   const link = solid ? "text-ink hover:text-primary" : "text-mist hover:text-sage";
 
   const close = () => setOpenMenu(null);
@@ -404,10 +418,10 @@ export default function Navbar({ variant = "light" }) {
           if (!e.currentTarget.contains(e.relatedTarget)) close();
         }}
       >
-        <a href="/" aria-label="API Touch" className="shrink-0">
+        <a href="/" aria-label={siteName} className="shrink-0">
           <img
             src={logo}
-            alt="API Touch"
+            alt={siteName}
             className="block h-[42px] w-[84px] object-contain max-[1023.98px]:h-[36px] max-[1023.98px]:w-[72px]"
           />
         </a>

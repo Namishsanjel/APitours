@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/generate-sitemap.mjs",
     "lint": "oxlint",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@strapi/blocks-react-renderer": "^1.0.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },

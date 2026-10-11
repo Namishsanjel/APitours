@@ -583,6 +583,21 @@
     resize: vertical;
   }
 
+  /* Validation states. TripForm has been referencing these two classes since
+     before this file defined them, so its field errors rendered as unstyled
+     text; both forms now get the same red outline and message. */
+  .f-invalid {
+    outline: 1px solid #b3261e;
+    outline-offset: -1px;
+  }
+
+  .f-error {
+    font-family: var(--font-body);
+    font-size: 13px;
+    line-height: 18px;
+    color: #b3261e;
+  }
+
   /* 16px is the iOS threshold: below it, focusing a field zooms the page */
   @media (max-width: 639.98px) {
     .f-input,

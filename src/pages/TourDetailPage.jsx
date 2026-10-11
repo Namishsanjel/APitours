@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import PageShell from "../components/PageShell.jsx";
 import { PageHeader, ImgBlur } from "../components/ui.jsx";
 import TourCard from "../components/TourCard.jsx";
 import { HIKES_ALL } from "../data/hikes.js";
 import { TOUR_DETAILS } from "../data/tourDetails.js";
 import { GALLERY } from "../data/pages.js";
+import JsonLd from "../components/JsonLd.jsx";
+import { breadcrumbJsonLd, tourBreadcrumbs, tourJsonLd } from "../lib/jsonld.js";
+import { usePageMeta } from "../lib/seo.js";
 
 const GALLERY_IMAGES = GALLERY.columns.flat().map((c) => c.src);
 
@@ -37,9 +40,12 @@ export default function TourDetailPage() {
   const detail = TOUR_DETAILS[slug];
   const [shot, setShot] = useState(0);
 
-  useEffect(() => {
-    document.title = `${detail ? detail.title : "Tour"} — API Touch`;
-  }, [detail]);
+  const tagline = (detail?.overview ?? "").split("\n\n")[0] ?? "";
+
+  usePageMeta({
+    title: `${detail ? detail.title : "Tour"} — API Touch`,
+    description: tagline,
+  });
 
   if (!tour || !detail) {
     return (
@@ -54,15 +60,19 @@ export default function TourDetailPage() {
     );
   }
 
-  const [tagline, ...overview] = detail.overview.split("\n\n");
+  const [bodyTagline = "", ...overview] = detail.overview.split("\n\n");
   const [amount, unit] = detail.price.split(" /");
   const others = HIKES_ALL.filter((h) => h.slug !== slug).slice(0, 2);
+  const tourSchema = tourJsonLd({ ...tour, ...detail });
+  const breadcrumbSchema = breadcrumbJsonLd(tourBreadcrumbs(detail.title, slug));
 
   return (
     <PageShell>
+      <JsonLd id="jsonld-tour" data={tourSchema} />
+      <JsonLd id="jsonld-breadcrumb-tour" data={breadcrumbSchema} />
       {/* headline + standfirst, as on the original detail page */}
       <section className="container-x flex flex-col gap-8 pt-[120px] max-[1099.98px]:pt-[100px] max-[639.98px]:pt-[88px]">
-        <PageHeader title={detail.title} sub={tagline} />
+        <PageHeader title={detail.title} sub={bodyTagline} />
 
         {/* hero photo with the trip facts glassed over it */}
         <div className="relative h-[240px] overflow-hidden rounded-lg bg-mist p-1 min-[639.98px]:h-[300px] min-[1100px]:h-[360px]">

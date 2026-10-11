@@ -5,9 +5,49 @@ import Footer from "../components/Footer.jsx";
 import { Eyebrow, SectionHead, HeadCopy, ImgBlur, Words } from "../components/ui.jsx";
 import { ABOUT } from "../data/pages.js";
 import { PAGES } from "../data/content.js";
+import { useStrapiList, hasContent, imageOf } from "../lib/strapiData.jsx";
+
+/**
+ * A team member from Strapi. The photo card sits on top rather than behind the
+ * copy because the CMS entries carry a bio and a LinkedIn link the photo-only
+ * card has nowhere to put.
+ */
+function MemberCard({ member }) {
+  const photo = imageOf(member.photo, member.name);
+
+  return (
+    <div className="flex flex-col overflow-hidden rounded-lg bg-mist">
+      {photo ? (
+        <img
+          src={photo.src}
+          alt={photo.alt}
+          loading="lazy"
+          className="h-[280px] w-full object-cover min-[1100px]:h-[320px]"
+        />
+      ) : null}
+      <div className="flex flex-1 flex-col gap-2 p-6">
+        {member.role ? <p className="t-eyebrow capitalize text-smoke">{member.role}</p> : null}
+        <h4 className="t-h4 text-ink">{member.name}</h4>
+        {member.bio ? <p className="t-body">{member.bio}</p> : null}
+        {member.linkedin ? (
+          <a
+            href={member.linkedin}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="t-link mt-auto w-fit text-ink underline underline-offset-4"
+          >
+            LinkedIn
+          </a>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 
 export default function AboutPage() {
   const page = PAGES["/about"];
+  const { items } = useStrapiList("team-members?populate=photo&sort=order:asc");
+  const fromStrapi = hasContent(items);
 
   useEffect(() => {
     document.title = page.title;
@@ -98,7 +138,7 @@ export default function AboutPage() {
         </section>
 
         {/* our guides: 2 x 3 photo cards */}
-        <section className="section-py container-x flex flex-col gap-8 min-[639.98px]:gap-12">
+        <section id="our-guides" className="section-py container-x flex scroll-mt-28 flex-col gap-8 min-[639.98px]:gap-12">
           <SectionHead
             badge={ABOUT.guides.badge}
             title={ABOUT.guides.title}
@@ -107,20 +147,30 @@ export default function AboutPage() {
           >
             <HeadCopy>{ABOUT.guides.body}</HeadCopy>
           </SectionHead>
-          <div className="grid grid-cols-1 gap-6 min-[639.98px]:grid-cols-2 min-[1100px]:grid-cols-3">
-            {ABOUT.guides.people.map((g) => (
-              <div key={g.name} className="relative h-[420px] overflow-hidden rounded-lg min-[1100px]:h-[501px]">
-                <img src={g.image} alt={g.name} className="absolute inset-0 h-full w-full object-cover" />
-                <ImgBlur />
-                <div className="absolute inset-0 z-10 flex flex-col justify-end gap-1 p-4">
-                  <Eyebrow className="capitalize" color="var(--color-mist)">
-                    {g.role}
-                  </Eyebrow>
-                  <h4 className="t-h4 text-mist">{g.name}</h4>
+          {/* Strapi team members when there are any; the original six photo
+              cards when there are not, so this section is never empty */}
+          {fromStrapi ? (
+            <div className="grid grid-cols-1 gap-6 min-[639.98px]:grid-cols-2 min-[1100px]:grid-cols-3">
+              {items.map((m) => (
+                <MemberCard key={m.documentId ?? m.id ?? m.name} member={m} />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 min-[639.98px]:grid-cols-2 min-[1100px]:grid-cols-3">
+              {ABOUT.guides.people.map((g) => (
+                <div key={g.name} className="relative h-[420px] overflow-hidden rounded-lg min-[1100px]:h-[501px]">
+                  <img src={g.image} alt={g.name} className="absolute inset-0 h-full w-full object-cover" />
+                  <ImgBlur />
+                  <div className="absolute inset-0 z-10 flex flex-col justify-end gap-1 p-4">
+                    <Eyebrow className="capitalize" color="var(--color-mist)">
+                      {g.role}
+                    </Eyebrow>
+                    <h4 className="t-h4 text-mist">{g.name}</h4>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
 
         <Faq />

@@ -8,6 +8,7 @@ import { useReveal, stagger } from "../motion.js";
 import { HIKES_PAGE, HIKES_ALL } from "../data/hikes.js";
 import { DESTINATIONS_ALL, EXPERIENCE_BY_TOUR } from "../data/newPages.js";
 import { TOUR_DETAILS } from "../data/tourDetails.js";
+import { PAGES } from "../data/content.js";
 
 function HikeCard({ hike, className = "", index = null }) {
   const rv = useReveal({ delay: index == null ? 0 : stagger(index) });
@@ -188,6 +189,8 @@ export default function HikesPage() {
 
   useEffect(() => {
     document.title = HIKES_PAGE.documentTitle;
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute("content", PAGES["/tours"].description);
   }, []);
 
   const options = useMemo(() => {

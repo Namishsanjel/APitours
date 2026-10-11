@@ -7,6 +7,7 @@ import DestinationsPage from "./pages/DestinationsPage.jsx";
 import DestinationDetailPage from "./pages/DestinationDetailPage.jsx";
 import ExperiencesPage from "./pages/ExperiencesPage.jsx";
 import ServicesPage from "./pages/ServicesPage.jsx";
+import ServiceDetailPage from "./pages/ServiceDetailPage.jsx";
 import PlanTripPage from "./pages/PlanTripPage.jsx";
 import AboutPage from "./pages/AboutPage.jsx";
 import WhyPage from "./pages/WhyPage.jsx";
@@ -17,6 +18,10 @@ import BlogDetailPage from "./pages/BlogDetailPage.jsx";
 import ContactPage from "./pages/ContactPage.jsx";
 import FaqPage from "./pages/FaqPage.jsx";
 import { TermsPage, PrivacyPage, CancellationPage } from "./pages/LegalPage.jsx";
+import JsonLd from "./components/JsonLd.jsx";
+import { organizationJsonLd, webSiteJsonLd } from "./lib/jsonld.js";
+import { useCanonical } from "./lib/seo.js";
+import { StrapiProvider } from "./lib/strapiData.jsx";
 
 /** "/tours.html" | "/tours/" | "/tours"  ->  "/tours" */
 function normalize(path) {
@@ -55,6 +60,7 @@ const ROUTES = [
   { path: "/destinations/:slug", Page: DestinationDetailPage },
   { path: "/experiences", Page: ExperiencesPage },
   { path: "/services", Page: ServicesPage },
+  { path: "/services/:slug", Page: ServiceDetailPage },
   { path: "/plan-your-trip", Page: PlanTripPage },
   { path: "/about", Page: AboutPage },
   { path: "/why-apitouch", Page: WhyPage },
@@ -104,7 +110,16 @@ export default function App() {
       if (url.pathname !== window.location.pathname || url.search !== window.location.search) {
         window.history.pushState({}, "", url.pathname + url.search + url.hash);
         setPath(resolve(url.pathname));
-        window.scrollTo(0, 0);
+        if (url.hash) {
+          // wait for the new page to render, then jump to the section
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              document.querySelector(url.hash)?.scrollIntoView();
+            });
+          });
+        } else {
+          window.scrollTo(0, 0);
+        }
       } else if (url.hash) {
         document.querySelector(url.hash)?.scrollIntoView();
       }
@@ -124,9 +139,19 @@ export default function App() {
   // Section-by-section scroll reveals, re-armed on every route change.
   useSectionReveal(path);
 
+  // One absolute self-referencing canonical per route (rewrites the link
+  // element in place, so a route change can never leave a second one behind).
+  useCanonical(path);
+
   return (
-    <div className="relative min-h-screen bg-cream text-ink">
-      <Page />
-    </div>
+    // StrapiProvider fetches /api/global once for the whole app so the header
+    // and footer can read the site name, logo and contact details from it.
+    <StrapiProvider>
+      <div className="relative min-h-screen bg-cream text-ink">
+        <JsonLd id="jsonld-organization" data={organizationJsonLd()} />
+        <JsonLd id="jsonld-website" data={webSiteJsonLd()} />
+        <Page />
+      </div>
+    </StrapiProvider>
   );
 }

@@ -1,9 +1,11 @@
-import { useEffect } from "react";
 import PageShell from "../components/PageShell.jsx";
 import { PageHeader, ImgBlur } from "../components/ui.jsx";
 import JournalPage from "./JournalPage.jsx";
 import { BLOG_POSTS } from "../data/blogPosts.js";
 import { JOURNAL_PAGE, ABOUT } from "../data/pages.js";
+import JsonLd from "../components/JsonLd.jsx";
+import { articleJsonLd, blogBreadcrumbs, breadcrumbJsonLd } from "../lib/jsonld.js";
+import { usePageMeta } from "../lib/seo.js";
 
 // slug -> photo, taken from the blog index page's own cards
 const POST_IMAGE = [JOURNAL_PAGE.featured, ...JOURNAL_PAGE.posts].reduce((map, p) => {
@@ -41,19 +43,24 @@ export default function BlogDetailPage() {
   const post = BLOG_POSTS[slug];
   const image = POST_IMAGE[slug];
 
-  useEffect(() => {
-    document.title = `${post ? post.title : "Blog"} — API Touch`;
-  }, [post]);
+  usePageMeta({
+    title: `${post ? post.title : "Blog"} — API Touch`,
+    description: post ? post.intro : null,
+  });
 
   if (!post) return <JournalPage />;
 
   const author = post.author;
+  const articleSchema = articleJsonLd(post, { image });
+  const breadcrumbSchema = breadcrumbJsonLd(blogBreadcrumbs(post.title, post.slug));
   const explore = [JOURNAL_PAGE.featured, ...JOURNAL_PAGE.posts]
     .filter((p) => !p.href.endsWith(slug))
     .slice(0, 3);
 
   return (
     <PageShell>
+      <JsonLd id="jsonld-article" data={articleSchema} />
+      <JsonLd id="jsonld-breadcrumb-article" data={breadcrumbSchema} />
       <section className="container-x flex flex-col gap-8 pt-[120px] max-[1099.98px]:pt-[100px] max-[639.98px]:pt-[88px]">
         <PageHeader title={post.title} sub={post.intro} />
 
