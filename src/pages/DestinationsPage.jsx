@@ -1,11 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import PageShell from "../components/PageShell.jsx";
 import { PageHeader, ImgBlur } from "../components/ui.jsx";
-import { DESTINATIONS_PAGE, DESTINATIONS_ALL } from "../data/newPages.js";
+import { DESTINATIONS_PAGE } from "../data/newPages.js";
 import { PAGES } from "../data/content.js";
+import { useStrapiDestinations } from "../lib/strapiData.jsx";
+import { destinationList } from "../lib/catalog.js";
 
 export default function DestinationsPage() {
   const page = PAGES["/destinations"];
+  const strapiDestinations = useStrapiDestinations();
+  // Strapi's continent enumeration is mapped back to the labels the groups use.
+  const destinations = useMemo(() => destinationList(strapiDestinations), [strapiDestinations]);
 
   useEffect(() => {
     document.title = page.title;
@@ -19,7 +24,7 @@ export default function DestinationsPage() {
         <PageHeader badge={DESTINATIONS_PAGE.badge} title={DESTINATIONS_PAGE.title} sub={DESTINATIONS_PAGE.sub} />
 
         {DESTINATIONS_PAGE.groups.map((group) => {
-          const list = DESTINATIONS_ALL.filter((d) => d.continent === group);
+          const list = destinations.filter((d) => d.continent === group);
           if (!list.length) return null;
           return (
             <div key={group} className="flex flex-col gap-6">

@@ -1,11 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { NAV_LINKS, IMG } from "../data/content.js";
 import { DESTINATIONS_ALL, DESTINATIONS_PAGE } from "../data/newPages.js";
-import { HIKES_ALL, HIKES_PAGE } from "../data/hikes.js";
-import { TOUR_DETAILS } from "../data/tourDetails.js";
+import { HIKES_PAGE } from "../data/hikes.js";
 import { ImgBlur } from "./ui.jsx";
 import { useReveal } from "../motion.js";
-import { useGlobal, imageOf } from "../lib/strapiData.jsx";
+import { useGlobal, useStrapiTours, imageOf } from "../lib/strapiData.jsx";
+import { tourListings } from "../lib/catalog.js";
+
+/** Tours as the listing records, from Strapi when it has any, else the data file. */
+function useTourListings() {
+  const strapiTours = useStrapiTours();
+  return useMemo(() => tourListings(strapiTours), [strapiTours]);
+}
 
 /** The 11x7 chevron the booking form's select already uses, pointed down. */
 function ChevronDown({ className = "" }) {
@@ -123,10 +129,9 @@ const DIFFICULTIES = HIKES_PAGE.filters.filter((f) => f !== "All");
 /**
  * Package preview — the tours page card (photo + grad-card + ImgBlur +
  * chips + name + price + cream CTA) at menu size, mirroring the destination
- * preview above. Price comes from the tour's own detail page where we have one.
+ * preview above. The listing record carries its own formatted price now.
  */
 function PackagePreview({ pkg }) {
-  const detail = TOUR_DETAILS[pkg.slug];
   return (
     <a href={pkg.href} className="relative min-w-0 flex-1 rounded-lg bg-mist p-1">
       <div className="relative h-[300px] w-full overflow-hidden rounded min-[1100px]:h-[380px]">
@@ -144,8 +149,8 @@ function PackagePreview({ pkg }) {
           <div className="flex items-end justify-between gap-4 min-[1100px]:gap-8">
             <div className="flex min-w-0 flex-col gap-3">
               <h3 className="t-h3l text-mist">{pkg.title}</h3>
-              {detail?.price ? (
-                <p className="t-body text-mist max-[1099.98px]:hidden">{detail.price}</p>
+              {pkg.price ? (
+                <p className="t-body text-mist max-[1099.98px]:hidden">{pkg.price}</p>
               ) : null}
             </div>
             <span className="btn btn-cream w-[104px]">explore</span>
@@ -162,11 +167,12 @@ function PackagePreview({ pkg }) {
  * tour's card filling the right, and the closing banner underneath.
  */
 function PackagesMenu({ onNavigate }) {
-  const [active, setActive] = useState(HIKES_ALL[0].slug);
-  const groups = DIFFICULTIES.map((level) => HIKES_ALL.filter((p) => p.chips[0] === level)).filter(
+  const tours = useTourListings();
+  const [active, setActive] = useState(() => tours[0].slug);
+  const groups = DIFFICULTIES.map((level) => tours.filter((p) => p.chips[0] === level)).filter(
     (list) => list.length
   );
-  const current = HIKES_ALL.find((p) => p.slug === active) ?? HIKES_ALL[0];
+  const current = tours.find((p) => p.slug === active) ?? tours[0];
 
   return (
     <div id="nav-packages-menu" className="absolute inset-x-0 top-full hidden min-[1024px]:block">
@@ -199,7 +205,7 @@ function PackagesMenu({ onNavigate }) {
         <div className="flex flex-wrap items-center justify-between gap-4 border-t border-ink/10 pt-5">
           <div className="flex flex-wrap items-center gap-4 min-[1100px]:gap-6">
             <p className="t-eyebrow text-smoke">
-              {HIKES_ALL.length} packages · {groups.length} difficulty levels
+              {tours.length} packages · {groups.length} difficulty levels
             </p>
             <a href="/tours" onClick={onNavigate} className="t-link text-ink underline underline-offset-4">
               All packages
@@ -226,6 +232,7 @@ const MENUS = {
  * nothing in the nav is unreachable on a phone or tablet.
  */
 function MobileMenu({ open, onNavigate }) {
+  const tours = useTourListings();
   const [group, setGroup] = useState(null);
 
   if (!open) return null;
@@ -251,7 +258,7 @@ function MobileMenu({ open, onNavigate }) {
               );
             }
 
-            const list = l.menu === "destinations" ? DESTINATIONS_ALL : HIKES_ALL;
+            const list = l.menu === "destinations" ? DESTINATIONS_ALL : tours;
 
             return (
               <div key={l.label} className="border-b border-ink/10">

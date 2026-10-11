@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { getStrapi, asList, bestImage } from "./strapi.js";
 
 /**
@@ -13,7 +13,25 @@ import { getStrapi, asList, bestImage } from "./strapi.js";
  *    appears on every page costs one request per 60 seconds, not one per mount.
  */
 
-const GlobalContext = createContext(null);
+/**
+ * One request each for the two catalogue collections, for the whole app.
+ *
+ * Every populate needed by the adapter is listed explicitly — Strapi v5 returns
+ * a relation's own scalars but not its media or components unless asked, and
+ * `populate=*` does not reach nested data. pageSize 100 covers the whole
+ * collection in one page, and sort=order:asc gives the order the pages already
+ * present the lists in.
+ */
+const TOURS_PATH =
+  "tours?populate[coverImage]=true&populate[gallery]=true&populate[itinerary]=true" +
+  "&populate[inclusions]=true&populate[exclusions]=true&populate[destination]=true" +
+  "&sort=order:asc&pagination[pageSize]=100";
+
+const DESTINATIONS_PATH =
+  "destinations?populate[image]=true&populate[attractions]=true&populate[activities]=true" +
+  "&populate[bestTime]=true&populate[tours][fields][0]=slug&sort=order:asc&pagination[pageSize]=100";
+
+const StrapiContext = createContext(null);
 
 /**
  * Fetches the global entry once for the whole app — the header, the footer and
@@ -25,6 +43,8 @@ const GlobalContext = createContext(null);
  */
 export function StrapiProvider({ children }) {
   const [global, setGlobal] = useState(null);
+  const [tours, setTours] = useState(null);
+  const [destinations, setDestinations] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -40,12 +60,45 @@ export function StrapiProvider({ children }) {
     };
   }, []);
 
-  return <GlobalContext.Provider value={global}>{children}</GlobalContext.Provider>;
+  // Tours and destinations load once and are shared, so a page that needs both
+  // (the tours listing filtering by destination, the nav menus) does not issue
+  // its own pair of requests per mount. Null means "nothing to show" and is
+  // what every caller falls back from.
+  useEffect(() => {
+    let alive = true;
+    getStrapi(TOURS_PATH)
+      .then((data) => {
+        if (alive) setTours(asList(data));
+      })
+      .catch(() => {});
+    getStrapi(DESTINATIONS_PATH)
+      .then((data) => {
+        if (alive) setDestinations(asList(data));
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const value = useMemo(() => ({ global, tours, destinations }), [global, tours, destinations]);
+
+  return <StrapiContext.Provider value={value}>{children}</StrapiContext.Provider>;
 }
 
 /** The global entry, or null while loading / if Strapi is unreachable. */
 export function useGlobal() {
-  return useContext(GlobalContext);
+  return useContext(StrapiContext)?.global ?? null;
+}
+
+/** Raw Strapi tour entries, or null until there are any. */
+export function useStrapiTours() {
+  return useContext(StrapiContext)?.tours ?? null;
+}
+
+/** Raw Strapi destination entries, or null until there are any. */
+export function useStrapiDestinations() {
+  return useContext(StrapiContext)?.destinations ?? null;
 }
 
 /**

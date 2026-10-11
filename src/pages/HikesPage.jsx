@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Navbar from "../components/Navbar.jsx";
 import Faq from "../components/Faq.jsx";
 import Footer from "../components/Footer.jsx";
 import { Eyebrow, ImgBlur, Words } from "../components/ui.jsx";
 import Icon from "../data/Icon.jsx";
 import { useReveal, stagger } from "../motion.js";
-import { HIKES_PAGE, HIKES_ALL } from "../data/hikes.js";
-import { DESTINATIONS_ALL, EXPERIENCE_BY_TOUR } from "../data/newPages.js";
+import { HIKES_PAGE } from "../data/hikes.js";
+import { EXPERIENCE_BY_TOUR } from "../data/newPages.js";
 import { TOUR_DETAILS } from "../data/tourDetails.js";
 import { PAGES } from "../data/content.js";
+import { useStrapiTours, useStrapiDestinations } from "../lib/strapiData.jsx";
+import { tourListings, destinationList, budgetOf } from "../lib/catalog.js";
 
 function HikeCard({ hike, className = "", index = null }) {
   const rv = useReveal({ delay: index == null ? 0 : stagger(index) });
@@ -158,29 +160,50 @@ const CARD_LARGE =
   "col-span-2 row-span-2 h-[600px] max-[1099.98px]:col-span-1 max-[1099.98px]:row-span-1 max-[1099.98px]:h-[420px]";
 const CARD_SMALL = "h-[420px] min-[1100px]:h-[288px]";
 
-const destinationOf = (slug) => DESTINATIONS_ALL.find((d) => d.tours.includes(slug))?.name ?? "Other";
-
-function priceOf(slug) {
-  const raw = TOUR_DETAILS[slug]?.price ?? "";
-  const m = raw.match(/\$([\d.]+)K?/);
-  if (!m) return 0;
-  const n = Number.parseFloat(m[1]);
-  return raw.includes("K") ? n * 1000 : n;
-}
-
-const budgetOf = (slug) => {
-  const n = priceOf(slug);
-  if (n < 700) return "Under $700";
-  if (n < 1000) return "$700 – $1,000";
-  return "$1,000+";
-};
-
-const typeOf = (slug) => EXPERIENCE_BY_TOUR[slug] ?? "adventure";
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const BUDGETS = ["Under $700", "$700 – $1,000", "$1,000+"];
 
 export default function HikesPage() {
+  const strapiTours = useStrapiTours();
+  const strapiDestinations = useStrapiDestinations();
+
+  // Strapi when it has entries, the hardcoded lists otherwise.
+  const list0 = useMemo(() => tourListings(strapiTours), [strapiTours]);
+  const destinations = useMemo(() => destinationList(strapiDestinations), [strapiDestinations]);
+
+  /** A tour's destination name, read off the tour's own relation. */
+  const destinationOf = useCallback(
+    (slug) => {
+      const relation = list0.find((h) => h.slug === slug)?.destination;
+      if (relation) return relation.name;
+      return destinations.find((d) => d.tours.includes(slug))?.name ?? "Other";
+    },
+    [list0, destinations],
+  );
+
+  /** The numeric price: Strapi's own field, or the old display string parsed. */
+  const priceOf = useCallback(
+    (slug) => {
+      const own = list0.find((h) => h.slug === slug)?.priceAmount;
+      if (typeof own === "number") return own;
+      const raw = TOUR_DETAILS[slug]?.price ?? "";
+      const m = raw.match(/\$([\d.]+)K?/);
+      if (!m) return 0;
+      const n = Number.parseFloat(m[1]);
+      return raw.includes("K") ? n * 1000 : n;
+    },
+    [list0],
+  );
+
+  const bandOf = useCallback((slug) => budgetOf(priceOf(slug)), [priceOf]);
+
+  /** travelType on the CMS record, EXPERIENCE_BY_TOUR on the fallback list. */
+  const typeOf = useCallback(
+    (slug) => list0.find((h) => h.slug === slug)?.travelType ?? EXPERIENCE_BY_TOUR[slug] ?? "adventure",
+    [list0],
+  );
+
   const [difficulty, setDifficulty] = useState("All");
   const [destination, setDestination] = useState("All");
   const [duration, setDuration] = useState("All");
@@ -196,12 +219,13 @@ export default function HikesPage() {
   const options = useMemo(() => {
     const uniq = (list) => [...new Set(list)];
     return {
-      destinations: ["All", ...uniq(HIKES_ALL.map((h) => destinationOf(h.slug)))],
-      durations: ["All", ...uniq(HIKES_ALL.map((h) => h.chips[1]))],
+      destinations: ["All", ...uniq(list0.map((h) => destinationOf(h.slug)))],
+      // the duration chip is the second slot on the listing row
+      durations: ["All", ...uniq(list0.map((h) => h.chips[1]))],
       budgets: ["All", ...BUDGETS],
-      types: ["All", ...uniq(HIKES_ALL.map((h) => cap(typeOf(h.slug))))],
+      types: ["All", ...uniq(list0.map((h) => cap(typeOf(h.slug))))],
     };
-  }, []);
+  }, [list0, destinationOf, typeOf]);
 
   const groups = [
     { label: "Difficulty", options: HIKES_PAGE.filters, value: difficulty, set: setDifficulty },
@@ -211,11 +235,11 @@ export default function HikesPage() {
     { label: "Travel type", options: options.types, value: travelType, set: setTravelType },
   ];
 
-  const list = HIKES_ALL.filter((h) => {
+  const list = list0.filter((h) => {
     if (difficulty !== "All" && h.chips[0] !== difficulty) return false;
     if (destination !== "All" && destinationOf(h.slug) !== destination) return false;
     if (duration !== "All" && h.chips[1] !== duration) return false;
-    if (budget !== "All" && budgetOf(h.slug) !== budget) return false;
+    if (budget !== "All" && bandOf(h.slug) !== budget) return false;
     if (travelType !== "All" && typeOf(h.slug) !== travelType.toLowerCase()) return false;
     return true;
   });
@@ -251,7 +275,7 @@ export default function HikesPage() {
             <div className="flex items-center justify-between gap-4">
               <FilterMenu groups={groups} onReset={reset} />
               <p className="t-eyebrow text-smoke">
-                {list.length} of {HIKES_ALL.length} tours
+                {list.length} of {list0.length} tours
               </p>
             </div>
 

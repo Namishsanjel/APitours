@@ -1,12 +1,14 @@
+import { useMemo } from "react";
 import PageShell from "../components/PageShell.jsx";
 import { PageHeader } from "../components/ui.jsx";
 import TourCard from "../components/TourCard.jsx";
+import Blocks from "../components/Blocks.jsx";
 import DestinationsPage from "./DestinationsPage.jsx";
-import { DESTINATIONS_ALL } from "../data/newPages.js";
-import { HIKES_ALL } from "../data/hikes.js";
 import JsonLd from "../components/JsonLd.jsx";
 import { breadcrumbJsonLd, destinationBreadcrumbs } from "../lib/jsonld.js";
 import { usePageMeta } from "../lib/seo.js";
+import { useStrapiTours, useStrapiDestinations } from "../lib/strapiData.jsx";
+import { tourListings, destinationBySlug } from "../lib/catalog.js";
 
 function FactList({ title, items }) {
   return (
@@ -26,7 +28,13 @@ function FactList({ title, items }) {
 
 export default function DestinationDetailPage() {
   const slug = window.location.pathname.split("/").filter(Boolean).pop() ?? "";
-  const dest = DESTINATIONS_ALL.find((d) => d.slug === slug);
+  const strapiTours = useStrapiTours();
+  const strapiDestinations = useStrapiDestinations();
+
+  const dest = destinationBySlug(strapiDestinations, slug);
+  // The destination's own tours relation decides the list; the fallback
+  // destination record carries the old slug array.
+  const listings = useMemo(() => tourListings(strapiTours), [strapiTours]);
 
   usePageMeta({
     title: `${dest ? dest.name : "Destination"} — API Touch`,
@@ -35,7 +43,7 @@ export default function DestinationDetailPage() {
 
   if (!dest) return <DestinationsPage />;
 
-  const tours = HIKES_ALL.filter((h) => dest.tours.includes(h.slug));
+  const tours = listings.filter((h) => dest.tours.includes(h.slug));
   const breadcrumbSchema = breadcrumbJsonLd(destinationBreadcrumbs(dest.name, dest.slug));
 
   return (
@@ -44,6 +52,8 @@ export default function DestinationDetailPage() {
       <section className="container-x flex flex-col gap-6 pt-[120px] max-[1099.98px]:pt-[100px] max-[639.98px]:pt-[88px]">
         <PageHeader badge={dest.region} title={dest.name} sub={dest.body} />
         <img src={dest.image} alt={dest.alt} className="h-[240px] w-full rounded-lg object-cover min-[639.98px]:h-[320px] min-[1100px]:h-[420px]" />
+        {/* the CMS description is a blocks field; the hardcoded one is plain text */}
+        {Array.isArray(dest.description) ? <Blocks content={dest.description} /> : null}
       </section>
 
       <section className="container-x flex flex-col gap-8 pb-[60px] pt-10 min-[639.98px]:gap-12 min-[639.98px]:pt-12">

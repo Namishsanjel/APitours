@@ -108,7 +108,10 @@ export default function App() {
       if (url.origin !== window.location.origin) return;
       e.preventDefault();
       if (url.pathname !== window.location.pathname || url.search !== window.location.search) {
-        window.history.pushState({}, "", url.pathname + url.search + url.hash);
+        // push the resolved path, not the raw one: a legacy alias must not stay
+        // in the address bar while the page underneath is already the new slug,
+        // or anything reading window.location sees the old one
+        window.history.pushState({}, "", resolve(url.pathname) + url.search + url.hash);
         setPath(resolve(url.pathname));
         if (url.hash) {
           // wait for the new page to render, then jump to the section

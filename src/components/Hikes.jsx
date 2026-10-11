@@ -1,6 +1,9 @@
+import { useMemo } from "react";
 import { HIKES_SECTION, HIKES } from "../data/content.js";
 import { SectionHead, HeadCopy } from "./ui.jsx";
 import { useReveal, stagger } from "../motion.js";
+import { useStrapiTours } from "../lib/strapiData.jsx";
+import { featuredTours } from "../lib/catalog.js";
 
 function HikeCard({ hike, className = "", big = false, index = null }) {
   const rv = useReveal({ delay: index == null ? 0 : stagger(index) });
@@ -38,7 +41,10 @@ function HikeCard({ hike, className = "", big = false, index = null }) {
 }
 
 export default function Hikes() {
-  const [a, b, c, d] = HIKES;
+  const strapiTours = useStrapiTours();
+  // The four tours Strapi marks featured, in order; the original four otherwise.
+  const picks = useMemo(() => featuredTours(strapiTours, 4), [strapiTours]);
+  const [a, b, c, d] = picks.length ? picks : HIKES;
   return (
     <section id="hikes" className="section-py">
       <div className="container-x">

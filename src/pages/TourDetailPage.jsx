@@ -1,15 +1,15 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import PageShell from "../components/PageShell.jsx";
 import { PageHeader, ImgBlur } from "../components/ui.jsx";
 import TourCard from "../components/TourCard.jsx";
-import { HIKES_ALL } from "../data/hikes.js";
-import { TOUR_DETAILS } from "../data/tourDetails.js";
 import { GALLERY } from "../data/pages.js";
 import JsonLd from "../components/JsonLd.jsx";
 import { breadcrumbJsonLd, tourBreadcrumbs, tourJsonLd } from "../lib/jsonld.js";
 import { usePageMeta } from "../lib/seo.js";
+import { useStrapiTours } from "../lib/strapiData.jsx";
+import { tourListings, asTourDetail } from "../lib/catalog.js";
 
-const GALLERY_IMAGES = GALLERY.columns.flat().map((c) => c.src);
+const SHARED_GALLERY = GALLERY.columns.flat().map((c) => c.src);
 
 function CheckIcon() {
   return (
@@ -36,8 +36,10 @@ function Arrow({ dir }) {
 
 export default function TourDetailPage() {
   const slug = window.location.pathname.split("/").filter(Boolean).pop() ?? "";
-  const tour = HIKES_ALL.find((h) => h.slug === slug);
-  const detail = TOUR_DETAILS[slug];
+  const strapiTours = useStrapiTours();
+  const records = useMemo(() => tourListings(strapiTours), [strapiTours]);
+  const record = records.find((h) => h.slug === slug) ?? null;
+  const detail = record ? asTourDetail(record) : null;
   const [shot, setShot] = useState(0);
 
   const tagline = (detail?.overview ?? "").split("\n\n")[0] ?? "";
@@ -47,7 +49,17 @@ export default function TourDetailPage() {
     description: tagline,
   });
 
-  if (!tour || !detail) {
+  if (!record) {
+    // Still loading and nothing in the hardcoded list to show yet: an empty
+    // shell, rather than claiming the tour does not exist.
+    if (strapiTours === null) {
+      return (
+        <PageShell faq={false}>
+          <section className="page-sec container-x" />
+        </PageShell>
+      );
+    }
+
     return (
       <PageShell faq={false}>
         <section className="page-sec container-x flex flex-col gap-6">
@@ -61,9 +73,18 @@ export default function TourDetailPage() {
   }
 
   const [bodyTagline = "", ...overview] = detail.overview.split("\n\n");
-  const [amount, unit] = detail.price.split(" /");
-  const others = HIKES_ALL.filter((h) => h.slug !== slug).slice(0, 2);
-  const tourSchema = tourJsonLd({ ...tour, ...detail });
+  const [amount, unit] = detail.price ? detail.price.split(" /") : [];
+  const others = records.filter((h) => h.slug !== slug).slice(0, 2);
+  // The tour's own photos, or the shared site gallery when it has none.
+  const gallery = record.gallery?.length
+    ? record.gallery
+    : SHARED_GALLERY.map((src) => ({ src, alt: record.alt }));
+  const tourSchema = tourJsonLd({
+    ...record,
+    // structured values the schema already knows how to emit
+    price: record.priceAmount == null ? null : { amount: record.priceAmount, currency: "USD" },
+    duration: record.durationDays == null ? null : { days: record.durationDays },
+  });
   const breadcrumbSchema = breadcrumbJsonLd(tourBreadcrumbs(detail.title, slug));
 
   return (
@@ -77,7 +98,7 @@ export default function TourDetailPage() {
         {/* hero photo with the trip facts glassed over it */}
         <div className="relative h-[240px] overflow-hidden rounded-lg bg-mist p-1 min-[639.98px]:h-[300px] min-[1100px]:h-[360px]">
           <div className="relative h-full w-full overflow-hidden rounded">
-            <img src={tour.image} alt={tour.alt} className="absolute inset-0 h-full w-full object-cover" />
+            <img src={record.image} alt={record.alt} className="absolute inset-0 h-full w-full object-cover" />
             <div className="grad-card absolute inset-0" />
             <ImgBlur />
             <div className="absolute inset-0 z-10 flex flex-wrap gap-2 p-4">
@@ -120,15 +141,15 @@ export default function TourDetailPage() {
             <div className="relative h-[240px] overflow-hidden rounded-lg min-[639.98px]:h-[300px] min-[1100px]:h-[380px]">
               <img
                 key={shot}
-                src={GALLERY_IMAGES[shot]}
-                alt={tour.alt}
+                src={gallery[shot]?.src}
+                alt={gallery[shot]?.alt ?? record.alt}
                 className="shot-in absolute inset-0 h-full w-full object-cover"
               />
               <div className="absolute bottom-4 right-4 z-10 flex gap-2">
                 <button
                   type="button"
                   aria-label="Previous photo"
-                  onClick={() => setShot((i) => (i - 1 + GALLERY_IMAGES.length) % GALLERY_IMAGES.length)}
+                  onClick={() => setShot((i) => (i - 1 + gallery.length) % gallery.length)}
                   className="flex h-9 w-9 items-center justify-center rounded-full bg-mist text-ink"
                 >
                   <Arrow dir="left" />
@@ -136,7 +157,7 @@ export default function TourDetailPage() {
                 <button
                   type="button"
                   aria-label="Next photo"
-                  onClick={() => setShot((i) => (i + 1) % GALLERY_IMAGES.length)}
+                  onClick={() => setShot((i) => (i + 1) % gallery.length)}
                   className="flex h-9 w-9 items-center justify-center rounded-full bg-mist text-ink"
                 >
                   <Arrow dir="right" />
@@ -169,7 +190,7 @@ export default function TourDetailPage() {
             so it stays in flow. */}
         <aside className="flex w-full min-w-0 shrink-0 flex-col gap-5 self-start rounded-lg bg-mist p-6 min-[1100px]:sticky min-[1100px]:top-6 min-[1100px]:w-[470px]">
           <div className="h-[170px] overflow-hidden rounded-lg">
-            <img src={tour.image} alt="" className="h-full w-full object-cover" />
+            <img src={record.image} alt="" className="h-full w-full object-cover" />
           </div>
 
           {detail.start ? (
@@ -189,7 +210,7 @@ export default function TourDetailPage() {
           <div className="flex flex-col gap-4">
             <div className="flex items-baseline gap-1">
               <span className="t-h2 text-ink">{amount}</span>
-              <span className="t-body">/{unit}</span>
+              {unit ? <span className="t-body">/{unit}</span> : null}
             </div>
 
             <a href="/plan-your-trip" className="btn btn-dark h-[51px] w-full">

@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CONTACT } from "../data/content.js";
 import { STRAPI_URL } from "../lib/strapi.js";
 import { Eyebrow } from "./ui.jsx";
 import { Reveal } from "../anim.jsx";
+import { useStrapiTours } from "../lib/strapiData.jsx";
+import { tourTitles } from "../lib/catalog.js";
 
 function ChevronDown() {
   return (
@@ -56,6 +58,12 @@ const EMPTY = {
 
 export default function Contact() {
   const { badge, title, image, imageAlt, info, form } = CONTACT;
+  const strapiTours = useStrapiTours();
+
+  // The tour list from Strapi in `order`, the hardcoded options when it has
+  // none. Both sources are plain titles, which is all this field stores.
+  const tours = useMemo(() => tourTitles(strapiTours), [strapiTours]);
+  const tourOptions = tours.length ? tours : form.hike.options;
 
   const [values, setValues] = useState(EMPTY);
   const [errors, setErrors] = useState({});
@@ -108,7 +116,7 @@ export default function Contact() {
       email: values.email.trim(),
       message: values.message.trim(),
     };
-    if (values.hike) data.tour = values.hike;
+    if (tourValue) data.tour = tourValue;
     if (values.date) data.travelDate = values.date;
 
     try {
@@ -133,6 +141,11 @@ export default function Contact() {
   };
 
   const sending = status === "sending";
+
+  // The stored choice stops being valid when the options swap under it (the
+  // CMS list arriving), so the select falls back to the first entry rather
+  // than silently showing nothing.
+  const tourValue = tourOptions.includes(values.hike) ? values.hike : tourOptions[0] ?? "";
 
   return (
     <section className="contact-sec">
@@ -212,10 +225,10 @@ export default function Contact() {
                       id="contact-hike"
                       name="hike"
                       className="f-control f-select"
-                      value={values.hike}
+                      value={tourValue}
                       onChange={set("hike")}
                     >
-                      {form.hike.options.map((o) => (
+                      {tourOptions.map((o) => (
                         <option key={o} value={o}>
                           {o}
                         </option>
