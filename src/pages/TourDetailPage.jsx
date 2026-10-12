@@ -6,8 +6,8 @@ import { GALLERY } from "../data/pages.js";
 import JsonLd from "../components/JsonLd.jsx";
 import { breadcrumbJsonLd, tourBreadcrumbs, tourJsonLd } from "../lib/jsonld.js";
 import { usePageMeta } from "../lib/seo.js";
-import { useStrapiTours } from "../lib/strapiData.jsx";
-import { tourListings, asTourDetail } from "../lib/catalog.js";
+import { GALLERY_PATH, useStrapiList, hasContent, useStrapiTours } from "../lib/strapiData.jsx";
+import { tourListings, asTourDetail, galleryItems } from "../lib/catalog.js";
 
 const SHARED_GALLERY = GALLERY.columns.flat().map((c) => c.src);
 
@@ -37,6 +37,10 @@ function Arrow({ dir }) {
 export default function TourDetailPage() {
   const slug = window.location.pathname.split("/").filter(Boolean).pop() ?? "";
   const strapiTours = useStrapiTours();
+  // The shared site gallery, fetched only for a tour that turns out to have no
+  // photos of its own. Same path string as GalleryPage, so the 60s cache hands
+  // back the request that page already made.
+  const { items: strapiGallery } = useStrapiList(GALLERY_PATH);
   const records = useMemo(() => tourListings(strapiTours), [strapiTours]);
   const record = records.find((h) => h.slug === slug) ?? null;
   const detail = record ? asTourDetail(record) : null;
@@ -75,10 +79,15 @@ export default function TourDetailPage() {
   const [bodyTagline = "", ...overview] = detail.overview.split("\n\n");
   const [amount, unit] = detail.price ? detail.price.split(" /") : [];
   const others = records.filter((h) => h.slug !== slug).slice(0, 2);
-  // The tour's own photos, or the shared site gallery when it has none.
-  const gallery = record.gallery?.length
-    ? record.gallery
+  // The tour's own photos, or the shared site gallery when it has none. The CMS
+  // gallery is preferred over the hardcoded SHARED_GALLERY, and both carry their
+  // own alt text; the hardcoded fallback still borrows the tour's alt, because
+  // those files have none of their own.
+  const cmsGallery = galleryItems(hasContent(strapiGallery) ? strapiGallery[0]?.photos : null);
+  const sharedGallery = cmsGallery.length
+    ? cmsGallery.map(({ src, alt }) => ({ src, alt }))
     : SHARED_GALLERY.map((src) => ({ src, alt: record.alt }));
+  const gallery = record.gallery?.length ? record.gallery : sharedGallery;
   const tourSchema = tourJsonLd({
     ...record,
     // structured values the schema already knows how to emit

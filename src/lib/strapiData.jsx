@@ -31,6 +31,19 @@ const DESTINATIONS_PATH =
   "destinations?populate[image]=true&populate[attractions]=true&populate[activities]=true" +
   "&populate[bestTime]=true&populate[tours][fields][0]=slug&sort=order:asc&pagination[pageSize]=100";
 
+/**
+ * The gallery page as a single type, so it is fetched with useStrapiList rather
+ * than with the two collection requests above: the photos are only wanted by
+ * /gallery and by a tour detail page, and this way nothing else pays for them.
+ *
+ * Declared here so both pages pass the same string, and the 60s cache in
+ * strapi.js answers the second reader from the first one's request.
+ *
+ * `populate=photos` is enough: a media field comes back whole, with its
+ * formats, its width/height and its alternativeText.
+ */
+export const GALLERY_PATH = "gallery-page?populate=photos";
+
 const StrapiContext = createContext(null);
 
 /**

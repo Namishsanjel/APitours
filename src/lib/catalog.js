@@ -1,7 +1,8 @@
-import { bestImage, blocksToText } from "./strapi.js";
+import { bestImage, blocksToText, mediaUrl } from "./strapi.js";
 import { HIKES_ALL } from "../data/hikes.js";
 import { TOUR_DETAILS } from "../data/tourDetails.js";
 import { DESTINATIONS_ALL } from "../data/newPages.js";
+import { GALLERY } from "../data/pages.js";
 
 /**
  * Turns Strapi tours and destinations into the shapes the existing components
@@ -224,4 +225,97 @@ export function destinationList(entries) {
 /** One destination by slug, from either source. */
 export function destinationBySlug(entries, slug) {
   return destinationList(entries).find((d) => d.slug === slug) ?? null;
+}
+
+// ---------------------------------------------------------------------------
+// gallery page
+// ---------------------------------------------------------------------------
+
+/**
+ * Strapi's gallery-page has no columns, but the page draws a three-column
+ * masonry, so the columns are built here — the same rule the hand-packed
+ * columns in GALLERY were built by: walk the photos in order and drop each one
+ * into whichever column is currently shortest.
+ *
+ * "Shortest" is measured in rendered pixels, so an image's height is its
+ * column's width divided by its aspect ratio. Every column is the same width
+ * in the grid (1fr tracks), so COLUMN_WIDTH is only a scale factor: any value
+ * picks the same winners. The gap between images is left out — it is the same
+ * in all three columns and does not change which column wins.
+ */
+const GALLERY_COLUMN_COUNT = 3;
+const GALLERY_COLUMN_WIDTH = 480;
+
+/** Strapi measures every image, so a missing width/height is only a guard. */
+const SQUARE = { w: 1, h: 1 };
+
+/**
+ * One photo as { src, w, h, alt } — the same keys GALLERY's items carry, plus
+ * the alt text the editor wrote in the Media Library.
+ *
+ * `src` prefers the large rendition and falls back to the original, since a
+ * gallery column is roughly a third of the container and the originals are
+ * 1600px on the long edge. `w` and `h` are always the *original* dimensions, so
+ * the aspect ratio the page sets on the <img> matches the picture rather than
+ * whichever rendition was picked.
+ */
+function galleryPhoto(media) {
+  const pick = media?.formats?.large ?? (media?.url ? media : null);
+  const src = mediaUrl(pick?.url);
+  if (!src) return null;
+
+  const width = Number(media.width);
+  const height = Number(media.height);
+
+  return {
+    src,
+    w: Number.isFinite(width) && width > 0 ? width : SQUARE.w,
+    h: Number.isFinite(height) && height > 0 ? height : SQUARE.h,
+    alt: media.alternativeText || "",
+  };
+}
+
+/** The photos as flat { src, w, h, alt } items, in the order Strapi holds them. */
+export function galleryItems(photos) {
+  if (!Array.isArray(photos)) return [];
+  return photos.map(galleryPhoto).filter(Boolean);
+}
+
+function packGalleryColumns(items) {
+  const columns = Array.from({ length: GALLERY_COLUMN_COUNT }, () => []);
+  const heights = new Array(GALLERY_COLUMN_COUNT).fill(0);
+
+  for (const item of items) {
+    // strict <, so a tie goes to the leftmost column and the packing is stable
+    let shortest = 0;
+    for (let i = 1; i < columns.length; i += 1) if (heights[i] < heights[shortest]) shortest = i;
+
+    columns[shortest].push(item);
+    heights[shortest] += GALLERY_COLUMN_WIDTH / (item.w / item.h);
+  }
+
+  return columns;
+}
+
+/**
+ * The gallery-page single type as the object GalleryPage already renders:
+ * { badge, title, sub, columns }. The page's markup is unchanged, and the
+ * hand-written GALLERY stays the source of truth whenever the CMS has nothing
+ * to offer.
+ *
+ * Returns null when the entry has no usable photo — the same "nothing to show,
+ * keep the fallback" signal the other adapters use.
+ */
+export function galleryPageToRecord(entry) {
+  const items = galleryItems(entry?.photos);
+  if (items.length === 0) return null;
+
+  return {
+    // the CMS copy wins, but a field left empty falls back rather than blanking
+    // the page: this is a drop-in for a module that always had these three
+    badge: entry.badge || GALLERY.badge,
+    title: entry.title || GALLERY.title,
+    sub: entry.sub || GALLERY.sub,
+    columns: packGalleryColumns(items),
+  };
 }
