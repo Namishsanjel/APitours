@@ -1,5 +1,6 @@
 import { FOOTER, IMG } from "../data/content.js";
-import { useGlobal, imageOf } from "../lib/strapiData.jsx";
+import { useGlobalState, imageOf, STRAPI_STATUS } from "../lib/strapiData.jsx";
+import { FooterBrandSkeleton, FooterLogomarkSkeleton } from "./skeletons.jsx";
 
 /** "linkedin" / "LinkedIn" -> "LinkedIn", for a social column label. */
 function platformLabel(platform) {
@@ -14,7 +15,13 @@ const YEAR = new Date().getFullYear();
 
 export default function Footer() {
   const { title, body, cta, ctaHref, background, backgroundAlt, subline, copyright, columns } = FOOTER;
-  const global = useGlobal();
+  const { data: global, status: globalStatus } = useGlobalState();
+
+  // The logo, the closing line and the contact details all come out of the same
+  // global entry, so while it is in flight the whole brand column is held as a
+  // neutral placeholder rather than answered with the hardcoded name and logo.
+  // The copyright line is the site's own and is always shown.
+  const loading = globalStatus === STRAPI_STATUS.LOADING;
 
   const siteName = global?.siteName || "";
   const cmsLogo = imageOf(global?.logo, siteName || "API Touch");
@@ -70,30 +77,36 @@ export default function Footer() {
         {/* company info + sitemaps */}
         <div className="mt-16 flex flex-col gap-10 min-[639.98px]:mt-20 min-[900px]:flex-row min-[900px]:justify-between min-[900px]:gap-12 min-[1100px]:mt-[120px]">
           <div className="w-full min-w-0" style={{ maxWidth: 520 }}>
-            <img
-              src={logo}
-              alt={siteName || "API Touch"}
-              className="block h-[46px] w-[92px] object-contain max-[639.98px]:h-[40px] max-[639.98px]:w-[80px]"
-            />
-            <p className="t-body mt-4 text-sage [will-change:transform]">{closingLine}</p>
+            {loading ? (
+              <FooterBrandSkeleton />
+            ) : (
+              <>
+                <img
+                  src={logo}
+                  alt={siteName || "API Touch"}
+                  className="block h-[46px] w-[92px] object-contain max-[639.98px]:h-[40px] max-[639.98px]:w-[80px]"
+                />
+                <p className="t-body mt-4 text-sage [will-change:transform]">{closingLine}</p>
 
-            {/* contact details, only once Strapi's global entry carries them */}
-            {contacts.length ? (
-              <div className="mt-6 flex flex-col gap-3">
-                {contacts.map((c) => (
-                  <div key={c.label} className="flex flex-col gap-1">
-                    <p className="t-eyebrow text-mist/70">{c.label}</p>
-                    {c.href ? (
-                      <a href={c.href} className="t-link w-fit break-words text-sage">
-                        {c.value}
-                      </a>
-                    ) : (
-                      <p className="t-body text-sage">{c.value}</p>
-                    )}
+                {/* contact details, only once Strapi's global entry carries them */}
+                {contacts.length ? (
+                  <div className="mt-6 flex flex-col gap-3">
+                    {contacts.map((c) => (
+                      <div key={c.label} className="flex flex-col gap-1">
+                        <p className="t-eyebrow text-mist/70">{c.label}</p>
+                        {c.href ? (
+                          <a href={c.href} className="t-link w-fit break-words text-sage">
+                            {c.value}
+                          </a>
+                        ) : (
+                          <p className="t-body text-sage">{c.value}</p>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            ) : null}
+                ) : null}
+              </>
+            )}
 
             <p className="mt-6 font-body text-[16px] leading-[16px] text-mist">{copyrightLine}</p>
           </div>
@@ -139,7 +152,11 @@ export default function Footer() {
 
         {/* oversized brand mark */}
         <div className="logomark-mask mt-10 min-[639.98px]:mt-[60px]">
-          <img src={logo} alt="" className="mx-auto block h-[100px] w-[200px] object-contain min-[639.98px]:h-[150px] min-[639.98px]:w-[300px]" />
+          {loading ? (
+            <FooterLogomarkSkeleton />
+          ) : (
+            <img src={logo} alt="" className="mx-auto block h-[100px] w-[200px] object-contain min-[639.98px]:h-[150px] min-[639.98px]:w-[300px]" />
+          )}
           <div className="h-0 min-[639.98px]:h-[133.75px]" />
         </div>
       </div>

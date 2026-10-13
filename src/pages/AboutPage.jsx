@@ -5,7 +5,8 @@ import Footer from "../components/Footer.jsx";
 import { Eyebrow, SectionHead, HeadCopy, ImgBlur, Words } from "../components/ui.jsx";
 import { ABOUT } from "../data/pages.js";
 import { PAGES } from "../data/content.js";
-import { useStrapiList, hasContent, imageOf } from "../lib/strapiData.jsx";
+import { useStrapiList, hasContent, imageOf, STRAPI_STATUS } from "../lib/strapiData.jsx";
+import { TeamSkeleton } from "../components/skeletons.jsx";
 
 /**
  * A team member from Strapi. The photo card sits on top rather than behind the
@@ -46,8 +47,8 @@ function MemberCard({ member }) {
 
 export default function AboutPage() {
   const page = PAGES["/about"];
-  const { items } = useStrapiList("team-members?populate=photo&sort=order:asc");
-  const fromStrapi = hasContent(items);
+  const { items, status } = useStrapiList("team-members?populate=photo&sort=order:asc");
+  const fromStrapi = status === STRAPI_STATUS.READY && hasContent(items);
 
   useEffect(() => {
     document.title = page.title;
@@ -147,9 +148,12 @@ export default function AboutPage() {
           >
             <HeadCopy>{ABOUT.guides.body}</HeadCopy>
           </SectionHead>
-          {/* Strapi team members when there are any; the original six photo
-              cards when there are not, so this section is never empty */}
-          {fromStrapi ? (
+          {/* While the request is in flight the grid holds the CMS card shape at its own
+              height. Strapi team members when there are any; the original six
+              photo cards when there are not, so this section is never empty. */}
+          {status === STRAPI_STATUS.LOADING ? (
+            <TeamSkeleton />
+          ) : fromStrapi ? (
             <div className="grid grid-cols-1 gap-6 min-[639.98px]:grid-cols-2 min-[1100px]:grid-cols-3">
               {items.map((m) => (
                 <MemberCard key={m.documentId ?? m.id ?? m.name} member={m} />

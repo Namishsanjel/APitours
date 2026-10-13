@@ -7,9 +7,14 @@ import DestinationsPage from "./DestinationsPage.jsx";
 import JsonLd from "../components/JsonLd.jsx";
 import { breadcrumbJsonLd, destinationBreadcrumbs } from "../lib/jsonld.js";
 import { usePageMeta } from "../lib/seo.js";
-import { useStrapiTours, useStrapiDestinations } from "../lib/strapiData.jsx";
+import {
+  useStrapiToursState,
+  useStrapiDestinationsState,
+  STRAPI_STATUS,
+} from "../lib/strapiData.jsx";
 import { tourListings, destinationBySlug } from "../lib/catalog.js";
 import { rememberDestination } from "../lib/prefill.js";
+import { DestinationDetailSkeleton, TourPackagesSkeleton } from "../components/skeletons.jsx";
 
 function FactList({ title, items }) {
   return (
@@ -29,13 +34,17 @@ function FactList({ title, items }) {
 
 export default function DestinationDetailPage() {
   const slug = window.location.pathname.split("/").filter(Boolean).pop() ?? "";
-  const strapiTours = useStrapiTours();
-  const strapiDestinations = useStrapiDestinations();
+  const { data: strapiTours, status: toursStatus } = useStrapiToursState();
+  const { data: strapiDestinations, status: destinationsStatus } = useStrapiDestinationsState();
 
-  const dest = destinationBySlug(strapiDestinations, slug);
-  // The destination's own tours relation decides the list; the fallback
-  // destination record carries the old slug array.
+  const loading = destinationsStatus === STRAPI_STATUS.LOADING;
+  // the destination's own tours relation decides the list; the fallback
+  // destination record carries the old slug array
+  const dest = loading ? null : destinationBySlug(strapiDestinations, slug);
   const listings = useMemo(() => tourListings(strapiTours), [strapiTours]);
+  // the "tour packages" block is a second, separate read of the tours
+  // collection, so it holds its own skeleton rather than holding the page
+  const toursLoading = toursStatus === STRAPI_STATUS.LOADING;
 
   // Remember this destination by name for the plan-your-trip form, so a visitor
   // who browses destinations and then plans a trip starts from the one they
@@ -48,6 +57,18 @@ export default function DestinationDetailPage() {
     title: `${dest ? dest.name : "Destination"} — API Touch`,
     description: dest ? dest.body : null,
   });
+
+  // Loading: the header, the banner, the three fact lists and the closing call
+  // to action (whose heading carries this destination's name) are all held at
+  // their loaded sizes. Whether the slug will even resolve is not known yet, so
+  // this runs before the lookup below decides there is nothing to show.
+  if (loading) {
+    return (
+      <PageShell faq={false}>
+        <DestinationDetailSkeleton />
+      </PageShell>
+    );
+  }
 
   if (!dest) return <DestinationsPage />;
 
@@ -71,7 +92,9 @@ export default function DestinationDetailPage() {
           <FactList title="Best time to visit" items={dest.bestTime} />
         </div>
 
-        {tours.length ? (
+        {toursLoading ? (
+          <TourPackagesSkeleton />
+        ) : tours.length ? (
           <div className="flex flex-col gap-6">
             <div className="flex items-baseline justify-between border-b border-smoke/30 pb-3">
               <h2 className="t-h3s text-ink">Tour packages</h2>

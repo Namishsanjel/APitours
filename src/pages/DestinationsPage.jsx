@@ -3,12 +3,13 @@ import PageShell from "../components/PageShell.jsx";
 import { PageHeader, ImgBlur } from "../components/ui.jsx";
 import { DESTINATIONS_PAGE } from "../data/newPages.js";
 import { PAGES } from "../data/content.js";
-import { useStrapiDestinations } from "../lib/strapiData.jsx";
+import { useStrapiDestinationsState, STRAPI_STATUS } from "../lib/strapiData.jsx";
 import { destinationList } from "../lib/catalog.js";
+import { DestinationsSkeleton } from "../components/skeletons.jsx";
 
 export default function DestinationsPage() {
   const page = PAGES["/destinations"];
-  const strapiDestinations = useStrapiDestinations();
+  const { data: strapiDestinations, status } = useStrapiDestinationsState();
   // Strapi's continent enumeration is mapped back to the labels the groups use.
   const destinations = useMemo(() => destinationList(strapiDestinations), [strapiDestinations]);
 
@@ -23,45 +24,53 @@ export default function DestinationsPage() {
       <section className="page-sec container-x flex flex-col gap-8 min-[639.98px]:gap-12">
         <PageHeader badge={DESTINATIONS_PAGE.badge} title={DESTINATIONS_PAGE.title} sub={DESTINATIONS_PAGE.sub} />
 
-        {DESTINATIONS_PAGE.groups.map((group) => {
-          const list = destinations.filter((d) => d.continent === group);
-          if (!list.length) return null;
-          return (
-            <div key={group} className="flex flex-col gap-6">
-              <div className="flex items-baseline justify-between border-b border-smoke/30 pb-3">
-                <h2 className="t-h3s text-ink">{group}</h2>
-                <p className="t-eyebrow text-smoke">
-                  {list.length} {list.length === 1 ? "destination" : "destinations"}
-                </p>
-              </div>
+        {/* Loading: one skeleton group per continent, each holding the same number of
+            380px cards the list will, so the page does not jump when the groups
+            arrive. On a failure or an empty collection the hardcoded list
+            below renders exactly as it always has. */}
+        {status === STRAPI_STATUS.LOADING ? (
+          <DestinationsSkeleton />
+        ) : (
+          DESTINATIONS_PAGE.groups.map((group) => {
+            const list = destinations.filter((d) => d.continent === group);
+            if (!list.length) return null;
+            return (
+              <div key={group} className="flex flex-col gap-6">
+                <div className="flex items-baseline justify-between border-b border-smoke/30 pb-3">
+                  <h2 className="t-h3s text-ink">{group}</h2>
+                  <p className="t-eyebrow text-smoke">
+                    {list.length} {list.length === 1 ? "destination" : "destinations"}
+                  </p>
+                </div>
 
-              <div className="grid grid-cols-1 gap-6 min-[639.98px]:grid-cols-2 min-[1100px]:grid-cols-3">
-                {list.map((d) => (
-                  <a
-                    key={d.slug}
-                    href={`/destinations/${d.slug}`}
-                    className="relative block h-[380px] rounded-lg bg-mist p-1 [will-change:transform]"
-                  >
-                    <div className="relative h-full w-full overflow-hidden rounded">
-                      <img src={d.image} alt={d.alt} className="absolute inset-0 h-full w-full object-cover" />
-                      <div className="grad-card absolute inset-0" />
-                      <ImgBlur />
-                      <div className="absolute inset-0 z-10 flex flex-col justify-between p-4">
-                        <div className="flex flex-wrap gap-2">
-                          <span className="chip">{d.region}</span>
-                        </div>
-                        <div className="flex flex-col gap-3">
-                          <h3 className="t-h3l text-mist">{d.name}</h3>
-                          <span className="btn btn-cream w-[104px]">explore</span>
+                <div className="grid grid-cols-1 gap-6 min-[639.98px]:grid-cols-2 min-[1100px]:grid-cols-3">
+                  {list.map((d) => (
+                    <a
+                      key={d.slug}
+                      href={`/destinations/${d.slug}`}
+                      className="relative block h-[380px] rounded-lg bg-mist p-1 [will-change:transform]"
+                    >
+                      <div className="relative h-full w-full overflow-hidden rounded">
+                        <img src={d.image} alt={d.alt} className="absolute inset-0 h-full w-full object-cover" />
+                        <div className="grad-card absolute inset-0" />
+                        <ImgBlur />
+                        <div className="absolute inset-0 z-10 flex flex-col justify-between p-4">
+                          <div className="flex flex-wrap gap-2">
+                            <span className="chip">{d.region}</span>
+                          </div>
+                          <div className="flex flex-col gap-3">
+                            <h3 className="t-h3l text-mist">{d.name}</h3>
+                            <span className="btn btn-cream w-[104px]">explore</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </a>
-                ))}
+                    </a>
+                  ))}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
 
         <div className="flex flex-col items-start gap-4 rounded-lg bg-mist p-6 min-[639.98px]:flex-row min-[639.98px]:items-center min-[639.98px]:justify-between">
           <div className="flex min-w-0 flex-col gap-1">

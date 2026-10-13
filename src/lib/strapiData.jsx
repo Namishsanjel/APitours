@@ -1,17 +1,35 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { getStrapi, asList, bestImage } from "./strapi.js";
+import { getStrapi, peekStrapi, asList, bestImage } from "./strapi.js";
 
 /**
  * React bindings for the Strapi client.
  *
- * Two rules shape everything here:
- *  - `items` stays null until a request succeeds. Callers therefore render the
- *    hardcoded copy while loading and after a failure, and swap to CMS content
- *    only once there is real content to show. An empty array counts as "nothing
- *    to show", so the same fallback covers an empty collection.
- *  - Requests go through the shared cache in strapi.js, so the FAQ block that
- *    appears on every page costs one request per 60 seconds, not one per mount.
+ * Every reader is given the same four states, and only four:
+ *
+ *   "loading" — the request has not answered yet, and nothing cached can
+ *               answer for it. Sections render a skeleton in this state and
+ *               nothing else: the hardcoded copy is not shown as a
+ *               placeholder for CMS content that is on its way.
+ *   "ready"   — Strapi answered with at least one entry. The CMS content
+ *               renders.
+ *   "error"   — the request failed, timed out after 8s, or the network is
+ *               down. The hardcoded fallback renders.
+ *   "empty"   — the request succeeded but the collection has nothing in it.
+ *               The hardcoded fallback renders, exactly as on a failure: an
+ *               empty collection is an editorial state, not a rendering one.
+ *
+ * The fallback is therefore reached through exactly one branch (error/empty)
+ * rather than through the absence of data, which is what used to make a
+ * section flash its hardcoded copy and then swap it out.
  */
+
+/** The four statuses every reader reports. */
+export const STRAPI_STATUS = Object.freeze({
+  LOADING: "loading",
+  READY: "ready",
+  ERROR: "error",
+  EMPTY: "empty",
+});
 
 /**
  * One request each for the two catalogue collections, for the whole app.
@@ -31,6 +49,9 @@ const DESTINATIONS_PATH =
   "destinations?populate[image]=true&populate[attractions]=true&populate[activities]=true" +
   "&populate[bestTime]=true&populate[tours][fields][0]=slug&sort=order:asc&pagination[pageSize]=100";
 
+/** The single type the header, the footer and both their logos read. */
+const GLOBAL_PATH = "global?populate[logo]=true&populate[logoDark]=true";
+
 /**
  * The gallery page as a single type, so it is fetched with useStrapiList rather
  * than with the two collection requests above: the photos are only wanted by
@@ -44,51 +65,79 @@ const DESTINATIONS_PATH =
  */
 export const GALLERY_PATH = "gallery-page?populate=photos";
 
+/**
+ * The status a settled value earns: an entry (or a non-empty list) is "ready",
+ * a single type that came back null and a collection that came back empty are
+ * both "empty" — there is content, and there is nothing in it.
+ */
+function settledStatus(value, list) {
+  if (list) return asList(value).length > 0 ? STRAPI_STATUS.READY : STRAPI_STATUS.EMPTY;
+  return value ? STRAPI_STATUS.READY : STRAPI_STATUS.EMPTY;
+}
+
+/**
+ * The state a reader starts in, read straight off the shared cache.
+ *
+ * This is the whole no-flash story: a path whose request already resolved
+ * inside the 60s window answers "ready" here, synchronously, so the reader's
+ * very first render already has the content and never mounts a skeleton. Every
+ * other path — nothing cached, a request in flight, or a stale entry — starts
+ * at "loading" and the section draws its skeleton until the request lands.
+ *
+ * Pure, so it is safe to call during render (see useStrapiList, which needs it
+ * for a path that changed since the last one).
+ */
+function initialState(path, list) {
+  const peeked = peekStrapi(path);
+  if (peeked.status !== "ready") {
+    return { path, data: null, error: null, status: STRAPI_STATUS.LOADING };
+  }
+  const data = list ? asList(peeked.data) : peeked.data ?? null;
+  return { path, data, error: null, status: settledStatus(data, list) };
+}
+
 const StrapiContext = createContext(null);
 
 /**
- * Fetches the global entry once for the whole app — the header, the footer and
- * anything else that needs the site's own name or logos read it from here
- * rather than each issuing its own request.
+ * Fetches the global entry, the tours and the destinations once for the whole
+ * app, and publishes each with its status.
+ *
+ * One slot per resource, each a { data, status } pair: the header, the footer
+ * and anything else that needs the site's own name or logos read `global` from
+ * here rather than each issuing its own request, and a page that needs both
+ * collections (the tours listing filtering by destination, the nav menus) does
+ * not issue its own pair per mount.
  *
  * Both media fields are populated explicitly: `logo` is the one that sits over
  * a photo, `logoDark` the one on the cream panel.
  */
 export function StrapiProvider({ children }) {
-  const [global, setGlobal] = useState(null);
-  const [tours, setTours] = useState(null);
-  const [destinations, setDestinations] = useState(null);
+  const [global, setGlobal] = useState(() => initialState(GLOBAL_PATH, false));
+  const [tours, setTours] = useState(() => initialState(TOURS_PATH, true));
+  const [destinations, setDestinations] = useState(() => initialState(DESTINATIONS_PATH, true));
 
   useEffect(() => {
     let alive = true;
-    // A failure here is not worth reporting: every consumer already falls back
-    // to the hardcoded name and logo.
-    getStrapi("global?populate[logo]=true&populate[logoDark]=true")
-      .then((data) => {
-        if (alive) setGlobal(data);
-      })
-      .catch(() => {});
-    return () => {
-      alive = false;
+
+    const read = (path, list, set) => {
+      getStrapi(path)
+        .then((data) => {
+          if (!alive) return;
+          const value = list ? asList(data) : data ?? null;
+          set({ path, data: value, error: null, status: settledStatus(value, list) });
+        })
+        .catch((error) => {
+          // Kept as a state rather than a thrown error: every consumer renders
+          // its own fallback from "error", and the error object travels with it
+          // for anyone who wants to log it.
+          if (alive) set({ path, data: null, error, status: STRAPI_STATUS.ERROR });
+        });
     };
-  }, []);
 
-  // Tours and destinations load once and are shared, so a page that needs both
-  // (the tours listing filtering by destination, the nav menus) does not issue
-  // its own pair of requests per mount. Null means "nothing to show" and is
-  // what every caller falls back from.
-  useEffect(() => {
-    let alive = true;
-    getStrapi(TOURS_PATH)
-      .then((data) => {
-        if (alive) setTours(asList(data));
-      })
-      .catch(() => {});
-    getStrapi(DESTINATIONS_PATH)
-      .then((data) => {
-        if (alive) setDestinations(asList(data));
-      })
-      .catch(() => {});
+    read(GLOBAL_PATH, false, setGlobal);
+    read(TOURS_PATH, true, setTours);
+    read(DESTINATIONS_PATH, true, setDestinations);
+
     return () => {
       alive = false;
     };
@@ -99,41 +148,74 @@ export function StrapiProvider({ children }) {
   return <StrapiContext.Provider value={value}>{children}</StrapiContext.Provider>;
 }
 
-/** The global entry, or null while loading / if Strapi is unreachable. */
+/**
+ * What a reader gets with no provider above it. Nothing is in flight and
+ * nothing has loaded, so the resource reads as empty — every caller falls back
+ * to its hardcoded copy, which is the safe direction to be wrong in.
+ */
+const NO_PROVIDER = { path: null, data: null, error: null, status: STRAPI_STATUS.EMPTY };
+
+/** The global entry as { data, status } — the header and the footer's data. */
+export function useGlobalState() {
+  return useContext(StrapiContext)?.global ?? NO_PROVIDER;
+}
+
+/** Raw Strapi tour entries as { data, status }. */
+export function useStrapiToursState() {
+  return useContext(StrapiContext)?.tours ?? NO_PROVIDER;
+}
+
+/** Raw Strapi destination entries as { data, status }. */
+export function useStrapiDestinationsState() {
+  return useContext(StrapiContext)?.destinations ?? NO_PROVIDER;
+}
+
+/**
+ * The global entry, or null while loading / if Strapi is unreachable.
+ *
+ * The data-only shape every existing caller reads; useGlobalState() is the
+ * same value with the status attached.
+ */
 export function useGlobal() {
-  return useContext(StrapiContext)?.global ?? null;
+  return useGlobalState().data;
 }
 
 /** Raw Strapi tour entries, or null until there are any. */
 export function useStrapiTours() {
-  return useContext(StrapiContext)?.tours ?? null;
+  return useStrapiToursState().data;
 }
 
 /** Raw Strapi destination entries, or null until there are any. */
 export function useStrapiDestinations() {
-  return useContext(StrapiContext)?.destinations ?? null;
+  return useStrapiDestinationsState().data;
 }
 
 /**
  * Reads any collection (or a filtered one) from Strapi.
- * Returns { items, loading, error } where items is null until real content
- * arrives — see the note at the top of this file.
+ *
+ * Returns { items, error, loading, status } — and `data`, the same array under
+ * the name the other hooks use, so a caller can destructure either. `items` is
+ * kept for every existing caller; `loading` is kept for the one that reads it.
+ *
+ *   status  "loading" | "ready" | "error" | "empty"
+ *
+ * A path whose response is already in the 60s cache starts at "ready", so a
+ * second reader of the same path never shows a skeleton. A path that changed
+ * re-reads the cache during render (initialState is a pure cache read), which
+ * is why navigating from one tour's gallery to another's does not flash.
  */
 export function useStrapiList(path) {
-  // The path each result belongs to, so a request still in flight for the
-  // previous path is ignored rather than rendered. Clearing state inside the
-  // effect instead would mean a second render pass on every path change.
-  const [state, setState] = useState({ path: null, items: null, error: null });
+  const [state, setState] = useState(() => initialState(path, true));
 
   useEffect(() => {
     let alive = true;
 
     getStrapi(path)
       .then((data) => {
-        if (alive) setState({ path, items: asList(data), error: null });
+        if (alive) setState({ path, data: asList(data), error: null, status: settledStatus(data, true) });
       })
       .catch((error) => {
-        if (alive) setState({ path, items: null, error });
+        if (alive) setState({ path, data: null, error, status: STRAPI_STATUS.ERROR });
       });
 
     return () => {
@@ -141,13 +223,18 @@ export function useStrapiList(path) {
     };
   }, [path]);
 
-  const current = state.path === path ? state : { path, items: null, error: null };
+  // State belonging to the previous path is ignored rather than cleared inside
+  // the effect, which would cost a second render pass on every path change.
+  const current = state.path === path ? state : initialState(path, true);
 
   return {
-    items: current.items,
+    items: current.data,
+    /** The same array, named as the other hooks name it. */
+    data: current.data,
     error: current.error,
-    // still waiting on the very first answer for this path
-    loading: current.items === null && !current.error,
+    status: current.status,
+    // still waiting on the first answer for this path
+    loading: current.status === STRAPI_STATUS.LOADING,
   };
 }
 

@@ -9,8 +9,9 @@ import { HIKES_PAGE } from "../data/hikes.js";
 import { EXPERIENCE_BY_TOUR } from "../data/newPages.js";
 import { TOUR_DETAILS } from "../data/tourDetails.js";
 import { PAGES } from "../data/content.js";
-import { useStrapiTours, useStrapiDestinations } from "../lib/strapiData.jsx";
+import { useStrapiToursState, useStrapiDestinations, STRAPI_STATUS } from "../lib/strapiData.jsx";
 import { tourListings, destinationList, budgetOf } from "../lib/catalog.js";
+import { HikesPageSkeleton } from "../components/skeletons.jsx";
 
 function HikeCard({ hike, className = "", index = null }) {
   const rv = useReveal({ delay: index == null ? 0 : stagger(index) });
@@ -165,8 +166,13 @@ const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const BUDGETS = ["Under $700", "$700 – $1,000", "$1,000+"];
 
 export default function HikesPage() {
-  const strapiTours = useStrapiTours();
+  const { data: strapiTours, status: toursStatus } = useStrapiToursState();
   const strapiDestinations = useStrapiDestinations();
+
+  // Still in flight: the grid, the filters and the count are all read off the
+  // collection, so all three are held by a skeleton rather than answered with
+  // the hardcoded list.
+  const loading = toursStatus === STRAPI_STATUS.LOADING;
 
   // Strapi when it has entries, the hardcoded lists otherwise.
   const list0 = useMemo(() => tourListings(strapiTours), [strapiTours]);
@@ -271,35 +277,39 @@ export default function HikesPage() {
           </div>
 
           {/* filters (collapsed into one dropdown) + gallery-style grid */}
-          <div className="flex flex-col gap-6">
-            <div className="flex items-center justify-between gap-4">
-              <FilterMenu groups={groups} onReset={reset} />
-              <p className="t-eyebrow text-smoke">
-                {list.length} of {list0.length} tours
-              </p>
-            </div>
+          {loading ? (
+            <HikesPageSkeleton />
+          ) : (
+            <div className="flex flex-col gap-6">
+              <div className="flex items-center justify-between gap-4">
+                <FilterMenu groups={groups} onReset={reset} />
+                <p className="t-eyebrow text-smoke">
+                  {list.length} of {list0.length} tours
+                </p>
+              </div>
 
-            {list.length ? (
-              <div className="grid auto-rows-[420px] grid-cols-1 gap-6 min-[639.98px]:grid-cols-2 min-[1100px]:grid-cols-4 min-[1100px]:auto-rows-[288px]">
-                {list.map((h, i) => (
-                  <HikeCard
-                    key={h.slug}
-                    hike={h}
-                    index={i}
-                    className={i % 5 === 0 ? CARD_LARGE : CARD_SMALL}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col gap-3 rounded-lg bg-mist p-6">
-                <p className="t-h4 text-ink">No tours match those filters</p>
-                <p className="t-body">Try a wider budget or destination — or reset the filters to see all ten.</p>
-                <button type="button" onClick={reset} className="t-link self-start text-smoke">
-                  reset filters
-                </button>
-              </div>
-            )}
-          </div>
+              {list.length ? (
+                <div className="grid auto-rows-[420px] grid-cols-1 gap-6 min-[639.98px]:grid-cols-2 min-[1100px]:grid-cols-4 min-[1100px]:auto-rows-[288px]">
+                  {list.map((h, i) => (
+                    <HikeCard
+                      key={h.slug}
+                      hike={h}
+                      index={i}
+                      className={i % 5 === 0 ? CARD_LARGE : CARD_SMALL}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3 rounded-lg bg-mist p-6">
+                  <p className="t-h4 text-ink">No tours match those filters</p>
+                  <p className="t-body">Try a wider budget or destination — or reset the filters to see all ten.</p>
+                  <button type="button" onClick={reset} className="t-link self-start text-smoke">
+                    reset filters
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </section>
 
         <Faq />

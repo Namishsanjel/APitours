@@ -88,7 +88,9 @@ export function tourToRecord(entry) {
     // --- HIKES_ALL shape ---
     slug: entry.slug,
     title: entry.title,
-    href: `/tours/${entry.slug}`,
+    /* null, not "/tours/undefined", when the entry has no slug: the cards read
+       href as "is this a link at all" and render a plain container without one. */
+    href: entry.slug ? `/tours/${entry.slug}` : null,
     chips: chips(difficultyChip(entry.difficulty), days(entry.durationDays)),
     image: image?.src ?? null,
     alt: image?.alt || entry.title,
@@ -131,8 +133,33 @@ export function tourToRecord(entry) {
  * none to use.
  */
 export function tourListings(entries) {
-  if (!Array.isArray(entries) || entries.length === 0) return HIKES_ALL;
+  if (!Array.isArray(entries) || entries.length === 0) return hardcodedTours();
   return entries.map(tourToRecord);
+}
+
+/**
+ * The hardcoded tours as listing records, each one carrying the detail fields
+ * the tour detail page reads (overview, itinerary, inclusions, price, the end
+ * points).
+ *
+ * HIKES_ALL holds only the listing half of a tour — slug, chips, title, href,
+ * image, alt — and TOUR_DETAILS holds the other half under the same slug, which
+ * is how the original static site split them. The listing half is laid down
+ * last so the two-chip `chips` row the listing pages show is not overwritten by
+ * the four-chip detail row; `detailChips` keeps that one, exactly as
+ * `asTourDetail` does for a CMS record.
+ *
+ * This only runs on the fallback path. Without it a tour detail page reached
+ * with no CMS entries had no `overview` to split and threw instead of falling
+ * back, which is the one state where the fallback has to actually render.
+ */
+function hardcodedTours() {
+  return HIKES_ALL.map((hike) => {
+    const detail = TOUR_DETAILS[hike.slug];
+    if (!detail) return hike;
+    const { chips: detailChips, ...rest } = detail;
+    return { ...rest, ...hike, detailChips, priceAmount: null };
+  });
 }
 
 /** One tour by slug, from either source. */

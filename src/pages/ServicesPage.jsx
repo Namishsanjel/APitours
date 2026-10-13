@@ -4,7 +4,8 @@ import { PageHeader } from "../components/ui.jsx";
 import Icon from "../data/Icon.jsx";
 import { SERVICES, INCLUDED_SECTION, INCLUDED_FEATURES, PAGES } from "../data/content.js";
 import { SERVICES_PAGE } from "../data/newPages.js";
-import { useStrapiList, hasContent, imageOf } from "../lib/strapiData.jsx";
+import { useStrapiList, hasContent, imageOf, STRAPI_STATUS } from "../lib/strapiData.jsx";
+import { ServicesGridSkeleton } from "../components/skeletons.jsx";
 
 /** One card per Strapi service: picture, title, summary, linking to its detail page. */
 function ServiceCard({ service }) {
@@ -36,8 +37,8 @@ const FEATURES = [INCLUDED_FEATURES.guiding, INCLUDED_FEATURES.gear, INCLUDED_FE
 
 export default function ServicesPage() {
   const page = PAGES["/services"];
-  const { items } = useStrapiList("services?populate=image&sort=order:asc");
-  const fromStrapi = hasContent(items);
+  const { items, status } = useStrapiList("services?populate=image&sort=order:asc");
+  const fromStrapi = status === STRAPI_STATUS.READY && hasContent(items);
 
   useEffect(() => {
     document.title = page.title;
@@ -50,10 +51,15 @@ export default function ServicesPage() {
       <section className="page-sec container-x flex flex-col gap-8 min-[639.98px]:gap-12">
         <PageHeader badge={SERVICES_PAGE.badge} title={SERVICES_PAGE.title} sub={SERVICES_PAGE.sub} />
 
-        {/* Strapi services when there are any, the original two blocks below when
-            there are not — so the page still reads as designed if the CMS is
-            empty, unreachable, or simply has nothing published yet */}
-        {fromStrapi ? (
+        {/* Three states, in this order. While the request is in flight the grid
+            is a skeleton at the same 1 / 2 / 3 columns and the same card boxes —
+            the hardcoded copy below is NOT shown as a placeholder for CMS
+            content that is on its way. Strapi's services when it has any. The
+            original two blocks when it does not: empty, unreachable, or simply
+            nothing published yet, so the page still reads as designed. */}
+        {status === STRAPI_STATUS.LOADING ? (
+          <ServicesGridSkeleton />
+        ) : fromStrapi ? (
           <div className="grid grid-cols-1 gap-6 min-[639.98px]:grid-cols-2 min-[1100px]:grid-cols-3">
             {items.map((s) => (
               <ServiceCard key={s.documentId ?? s.id ?? s.slug} service={s} />

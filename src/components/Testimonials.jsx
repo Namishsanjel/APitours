@@ -1,7 +1,8 @@
 import { TESTIMONIAL_SECTION, FEATURED_QUOTE, REVIEWS, IMG } from "../data/content.js";
 import { SectionHead, HeadCopy } from "./ui.jsx";
 import Icon from "../data/Icon.jsx";
-import { useStrapiList, hasContent, imageOf } from "../lib/strapiData.jsx";
+import { useStrapiList, hasContent, imageOf, STRAPI_STATUS } from "../lib/strapiData.jsx";
+import { TestimonialsSkeleton } from "./skeletons.jsx";
 
 function Location({ children, color }) {
   return (
@@ -53,12 +54,15 @@ function Attribution({ name, meta, color }) {
 /**
  * Testimonials from Strapi, shaped the way the section already reads:
  * the entry flagged `featured` fills the big quote over the photo, the next
- * two fill the written cards. With no CMS content — or none reachable — the
- * original featured quote and two reviews are used unchanged.
+ * two fill the written cards. While the request is in flight the section shows
+ * a skeleton at the same 420 / 495px featured block and the same two 236px
+ * cards — never the hardcoded quote. With no CMS content, or none reachable,
+ * the original featured quote and two reviews are used unchanged.
  */
 export default function Testimonials() {
-  const { items } = useStrapiList("testimonials?populate=avatar&sort=order:asc");
-  const fromStrapi = hasContent(items);
+  const { items, status } = useStrapiList("testimonials?populate=avatar&sort=order:asc");
+  const loading = status === STRAPI_STATUS.LOADING;
+  const fromStrapi = !loading && hasContent(items);
 
   const featured = fromStrapi ? items.find((t) => t.featured) ?? items[0] : null;
   const written = fromStrapi ? items.filter((t) => t !== featured).slice(0, 2) : [];
@@ -105,38 +109,42 @@ export default function Testimonials() {
           </a>
         </SectionHead>
 
-        <div className="mt-8 flex flex-col gap-6 min-[639.98px]:mt-12 min-[1100px]:flex-row">
-          {/* featured quote over photo */}
-          <div className="relative h-[420px] w-full shrink-0 overflow-hidden rounded-lg min-[639.98px]:h-[495px] min-[1100px]:w-[480px]">
-            <img src={big.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
-            <div className="grad-quote absolute inset-0" />
-            <div className="absolute inset-0 flex flex-col justify-end px-6 pt-6 pb-[27px]">
-              <Stars rating={big.rating} />
-              <h4 className={`t-h4 text-mist ${big.rating ? "mt-3" : ""}`}>{big.quote}</h4>
-              <p className="mt-4 font-body text-[16px] leading-[22.4px] text-cream">
-                {big.name}
-              </p>
-              {big.meta ? <Location color="var(--color-mist)">{big.meta}</Location> : null}
+        {loading ? (
+          <TestimonialsSkeleton />
+        ) : (
+          <div className="mt-8 flex flex-col gap-6 min-[639.98px]:mt-12 min-[1100px]:flex-row">
+            {/* featured quote over photo */}
+            <div className="relative h-[420px] w-full shrink-0 overflow-hidden rounded-lg min-[639.98px]:h-[495px] min-[1100px]:w-[480px]">
+              <img src={big.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
+              <div className="grad-quote absolute inset-0" />
+              <div className="absolute inset-0 flex flex-col justify-end px-6 pt-6 pb-[27px]">
+                <Stars rating={big.rating} />
+                <h4 className={`t-h4 text-mist ${big.rating ? "mt-3" : ""}`}>{big.quote}</h4>
+                <p className="mt-4 font-body text-[16px] leading-[22.4px] text-cream">
+                  {big.name}
+                </p>
+                {big.meta ? <Location color="var(--color-mist)">{big.meta}</Location> : null}
+              </div>
+            </div>
+
+            {/* two written reviews */}
+            <div className="flex w-full min-w-0 flex-col gap-6" style={{ maxWidth: 762 }}>
+              {cards.map((r) => (
+                <div key={r.key} className="h-auto min-h-[236px] rounded-lg bg-mist p-6">
+                  <Stars rating={r.rating} />
+                  <h4 className={`t-h4 ${r.rating ? "mt-3" : ""}`}>{r.title}</h4>
+                  {r.body ? <p className="t-body mt-6">{r.body}</p> : null}
+                  <div className="mt-6 flex gap-[10px]">
+                    {r.avatar ? (
+                      <img src={r.avatar.src} alt={r.avatar.alt} loading="lazy" className="h-[41px] w-[41px] shrink-0 rounded-md object-cover" />
+                    ) : null}
+                    <Attribution name={r.name} meta={r.meta} color="var(--color-smoke)" />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-
-          {/* two written reviews */}
-          <div className="flex w-full min-w-0 flex-col gap-6" style={{ maxWidth: 762 }}>
-            {cards.map((r) => (
-              <div key={r.key} className="h-auto min-h-[236px] rounded-lg bg-mist p-6">
-                <Stars rating={r.rating} />
-                <h4 className={`t-h4 ${r.rating ? "mt-3" : ""}`}>{r.title}</h4>
-                {r.body ? <p className="t-body mt-6">{r.body}</p> : null}
-                <div className="mt-6 flex gap-[10px]">
-                  {r.avatar ? (
-                    <img src={r.avatar.src} alt={r.avatar.alt} loading="lazy" className="h-[41px] w-[41px] shrink-0 rounded-md object-cover" />
-                  ) : null}
-                  <Attribution name={r.name} meta={r.meta} color="var(--color-smoke)" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        )}
       </div>
     </section>
   );

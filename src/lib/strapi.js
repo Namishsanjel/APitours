@@ -20,7 +20,18 @@ export const STRAPI_URL = String(RAW_URL).replace(/\/+$/, "");
 /** How long a successful response stays in the cache. */
 export const CACHE_TTL = 60 * 1000;
 
-/** key -> { at, promise }. Promises are cached so parallel readers share one request. */
+/**
+ * How long a single request may take before it is abandoned.
+ *
+ * Without it a request that never settles — a Strapi that accepted the
+ * connection and then went quiet — would leave every reader in its loading
+ * state forever, with the hardcoded fallback suppressed. Eight seconds is
+ * long enough for a cold Strapi boot and short enough that a stalled one is
+ * reported as a failure and the fallback comes back.
+ */
+export const REQUEST_TIMEOUT = 8 * 1000;
+
+/** key -> { at, promise, state, data, error }. Promises are cached so parallel readers share one request. */
 const cache = new Map();
 
 /**
@@ -29,39 +40,96 @@ const cache = new Map();
  * `path` is the part after `/api/` — e.g. "services?populate=image&sort=order:asc".
  * Throws on a non-OK response with the endpoint and status in the message;
  * a rejected request is dropped from the cache so the next reader can retry.
+ *
+ * Every fetch is given `REQUEST_TIMEOUT` via an AbortController, so a request
+ * that stalls is rejected like any other failure instead of hanging.
  */
-export function getStrapi(path, { ttl = CACHE_TTL, force = false } = {}) {
+export function getStrapi(path, { ttl = CACHE_TTL, force = false, timeout = REQUEST_TIMEOUT } = {}) {
   const key = String(path ?? "").trim();
   if (!key) return Promise.reject(new Error("getStrapi: a path is required"));
 
   const hit = cache.get(key);
   if (!force && hit && Date.now() - hit.at < ttl) return hit.promise;
 
+  const url = `${STRAPI_URL}/api/${key}`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+
   const promise = (async () => {
-    const url = `${STRAPI_URL}/api/${key}`;
-    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    try {
+      const res = await fetch(url, {
+        headers: { Accept: "application/json" },
+        signal: controller.signal,
+      });
 
-    if (!res.ok) {
-      // Keep the body in the message: Strapi explains a 403/404 far better
-      // than the status line alone, and this is the only place it surfaces.
-      const body = await res.text().catch(() => "");
-      const detail = body ? ` — ${body.slice(0, 200)}` : "";
-      throw new Error(`Strapi request failed: GET ${url} returned ${res.status} ${res.statusText}${detail}`);
+      if (!res.ok) {
+        // Keep the body in the message: Strapi explains a 403/404 far better
+        // than the status line alone, and this is the only place it surfaces.
+        const body = await res.text().catch(() => "");
+        const detail = body ? ` — ${body.slice(0, 200)}` : "";
+        throw new Error(`Strapi request failed: GET ${url} returned ${res.status} ${res.statusText}${detail}`);
+      }
+
+      const json = await res.json();
+      return json?.data ?? null;
+    } catch (error) {
+      // An abort is ours, not Strapi's: say which one it was, because a timeout
+      // and a 500 lead to the same fallback but only one of them is fixable by
+      // editing content.
+      if (controller.signal.aborted) {
+        throw new Error(`Strapi request timed out after ${timeout}ms: GET ${url}`);
+      }
+      throw error;
+    } finally {
+      // Whichever way it went, the timer has no one left to fire for.
+      clearTimeout(timer);
     }
-
-    const json = await res.json();
-    return json?.data ?? null;
   })();
 
-  cache.set(key, { at: Date.now(), promise });
+  const entry = { at: Date.now(), promise, state: "pending", data: null, error: null };
+  cache.set(key, entry);
 
-  // A failure must not be remembered as though it were content, or the page
-  // would keep showing the fallback for the whole TTL after one blip.
-  promise.catch(() => {
-    if (cache.get(key)?.promise === promise) cache.delete(key);
-  });
+  // The settled value is kept on the entry as well as inside the promise, so
+  // peekStrapi() can answer synchronously — that is what lets a reader arriving
+  // after the first one render the content on its very first render.
+  promise.then(
+    (data) => {
+      if (cache.get(key) === entry) {
+        entry.state = "ready";
+        entry.data = data;
+      }
+    },
+    () => {
+      // A failure must not be remembered as though it were content, or the
+      // page would keep showing the fallback for the whole TTL after one blip.
+      if (cache.get(key) === entry) cache.delete(key);
+    },
+  );
 
   return promise;
+}
+
+/**
+ * The cached answer for `path`, read synchronously and without issuing a
+ * request: { status: "ready", data } when a fresh request for this exact path
+ * has already resolved, or { status: "loading" } for anything else — nothing
+ * cached, a cached request still in flight, or an entry stale past its TTL.
+ *
+ * Only a *ready* entry is reported. A failed request is deleted from the cache,
+ * so the next reader is told "loading" and issues its own attempt rather than
+ * inheriting a failure it never saw.
+ *
+ * This is the one piece that keeps the 60s cache free of a skeleton flash: the
+ * second page to ask for the FAQ block gets the answer in the same render it
+ * would have used to render the fallback, so it never shows a skeleton at all.
+ */
+export function peekStrapi(path, { ttl = CACHE_TTL } = {}) {
+  const key = String(path ?? "").trim();
+  const hit = key ? cache.get(key) : null;
+  if (!hit || hit.state !== "ready" || Date.now() - hit.at >= ttl) {
+    return { status: "loading", data: null };
+  }
+  return { status: "ready", data: hit.data };
 }
 
 /** Drops every cached response. Used when a page needs to show live values. */

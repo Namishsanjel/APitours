@@ -4,13 +4,22 @@ import { DESTINATIONS_PAGE } from "../data/newPages.js";
 import { HIKES_PAGE } from "../data/hikes.js";
 import { ImgBlur } from "./ui.jsx";
 import { useReveal } from "../motion.js";
-import { useGlobal, useStrapiTours, useStrapiDestinations, imageOf } from "../lib/strapiData.jsx";
+import {
+  useGlobalState,
+  useStrapiToursState,
+  useStrapiDestinationsState,
+  imageOf,
+  STRAPI_STATUS,
+} from "../lib/strapiData.jsx";
 import { tourListings, destinationList } from "../lib/catalog.js";
+import { NavMenuSkeleton, LogoSkeleton } from "./skeletons.jsx";
+import { Skeleton, SkeletonRegion } from "./Skeleton.jsx";
 
 /** Tours as the listing records, from Strapi when it has any, else the data file. */
 function useTourListings() {
-  const strapiTours = useStrapiTours();
-  return useMemo(() => tourListings(strapiTours), [strapiTours]);
+  const { data, status } = useStrapiToursState();
+  const listings = useMemo(() => tourListings(data), [data]);
+  return { listings, loading: status === STRAPI_STATUS.LOADING };
 }
 
 /**
@@ -22,15 +31,16 @@ function useTourListings() {
  * collection is fetched once in StrapiProvider, never once per mount.
  */
 function useDestinations() {
-  const strapiDestinations = useStrapiDestinations();
-  return useMemo(() => {
+  const { data, status } = useStrapiDestinationsState();
+  const destinations = useMemo(() => {
     // sorted on `order`, which Strapi returns as a number. The hardcoded
     // fallback has no order field, so its entries all tie and a stable sort
     // leaves them exactly where newPages.js put them.
-    return [...destinationList(strapiDestinations)].sort(
+    return [...destinationList(data)].sort(
       (a, b) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER),
     );
-  }, [strapiDestinations]);
+  }, [data]);
+  return { destinations, loading: status === STRAPI_STATUS.LOADING };
 }
 
 /** The 11x7 chevron the booking form's select already uses, pointed down. */
@@ -108,7 +118,7 @@ function DestinationPreview({ dest }) {
  * "South America" here — so the grouping below is unchanged code.
  */
 function DestinationsMenu({ onNavigate }) {
-  const destinations = useDestinations();
+  const { destinations, loading } = useDestinations();
   const [active, setActive] = useState(() => destinations[0]?.slug ?? null);
   const groups = DESTINATIONS_PAGE.groups
     .map((group) => destinations.filter((d) => d.continent === group))
@@ -116,6 +126,26 @@ function DestinationsMenu({ onNavigate }) {
   const total = groups.reduce((n, list) => n + list.length, 0);
   const current = destinations.find((d) => d.slug === active) ?? destinations[0];
   const currentSlug = current?.slug ?? null;
+
+  // Still in flight: the rows of the menu and the count beside its closing link
+  // are both read off the collection, so both are held. The hovered
+  // destination's card has nothing to show yet and is left out rather than
+  // filled with a placeholder photo.
+  if (loading) {
+    return (
+      <div id="nav-destinations-menu" className="absolute inset-x-0 top-full hidden min-[1024px]:block">
+        <NavMenuSkeleton
+          rows={destinations.length}
+          label="Loading destinations…"
+          linkLabel="All destinations"
+          linkHref="/destinations"
+          ctaLabel="Browse all tours"
+          ctaHref="/tours"
+          onNavigate={onNavigate}
+        />
+      </div>
+    );
+  }
 
   return (
     <div id="nav-destinations-menu" className="absolute inset-x-0 top-full hidden min-[1024px]:block">
@@ -210,12 +240,28 @@ function PackagePreview({ pkg }) {
  * tour's card filling the right, and the closing banner underneath.
  */
 function PackagesMenu({ onNavigate }) {
-  const tours = useTourListings();
+  const { listings: tours, loading } = useTourListings();
   const [active, setActive] = useState(() => tours[0].slug);
   const groups = DIFFICULTIES.map((level) => tours.filter((p) => p.chips[0] === level)).filter(
     (list) => list.length
   );
   const current = tours.find((p) => p.slug === active) ?? tours[0];
+
+  if (loading) {
+    return (
+      <div id="nav-packages-menu" className="absolute inset-x-0 top-full hidden min-[1024px]:block">
+        <NavMenuSkeleton
+          rows={tours.length}
+          label="Loading packages…"
+          linkLabel="All packages"
+          linkHref="/tours"
+          ctaLabel="Plan your trip"
+          ctaHref="/plan-your-trip"
+          onNavigate={onNavigate}
+        />
+      </div>
+    );
+  }
 
   return (
     <div id="nav-packages-menu" className="absolute inset-x-0 top-full hidden min-[1024px]:block">
@@ -275,8 +321,8 @@ const MENUS = {
  * nothing in the nav is unreachable on a phone or tablet.
  */
 function MobileMenu({ open, onNavigate }) {
-  const tours = useTourListings();
-  const destinations = useDestinations();
+  const { listings: tours, loading: toursLoading } = useTourListings();
+  const { destinations, loading: destinationsLoading } = useDestinations();
   const [group, setGroup] = useState(null);
 
   if (!open) return null;
@@ -288,6 +334,7 @@ function MobileMenu({ open, onNavigate }) {
           {NAV_LINKS.map((l) => {
             const isGroup = Boolean(l.menu && MENUS[l.menu]);
             const expanded = isGroup && group === l.menu;
+            const loading = l.menu === "destinations" ? destinationsLoading : toursLoading;
 
             if (!isGroup) {
               return (
@@ -317,19 +364,31 @@ function MobileMenu({ open, onNavigate }) {
                 </button>
 
                 {expanded ? (
-                  <ul className="flex flex-col gap-1 pb-4">
-                    {list.map((d) => (
-                      <li key={d.slug}>
-                        <a
-                          href={l.menu === "destinations" ? `/destinations/${d.slug}` : d.href}
-                          onClick={onNavigate}
-                          className="t-body block rounded-lg px-3 py-2 text-ink hover:bg-mist"
-                        >
-                          {d.name ?? d.title}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
+                  loading ? (
+                    /* the drawer's list of rows is the same read as the desktop
+                       menu, so it holds too — name line only, no preview */
+                    <SkeletonRegion label={`Loading ${l.menu}…`} className="flex flex-col gap-1 pb-4">
+                      {Array.from({ length: Math.min(list.length, 8) }, (_, i) => (
+                        <div key={i} className="flex items-center rounded-lg px-3 py-2">
+                          <Skeleton className="h-[22px] w-[62%]" />
+                        </div>
+                      ))}
+                    </SkeletonRegion>
+                  ) : (
+                    <ul className="flex flex-col gap-1 pb-4">
+                      {list.map((d) => (
+                        <li key={d.slug}>
+                          <a
+                            href={l.menu === "destinations" ? `/destinations/${d.slug}` : d.href}
+                            onClick={onNavigate}
+                            className="t-body block rounded-lg px-3 py-2 text-ink hover:bg-mist"
+                          >
+                            {d.name ?? d.title}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )
                 ) : null}
               </div>
             );
@@ -394,7 +453,12 @@ export default function Navbar({ variant = "light" }) {
   //   global.logoDark -> the bar turned solid (cream panel / page background)
   // A site that only fills one still works: the other falls back to it, and
   // with neither published the original file pair in content.js does.
-  const global = useGlobal();
+  //
+  // While that entry is in flight the logo is a neutral block of exactly the
+  // image's box. The site's text name stays in the link's label throughout, so
+  // the bar is never an empty gap — only a bar whose logo has not arrived.
+  const { data: global, status: globalStatus } = useGlobalState();
+  const logoLoading = globalStatus === STRAPI_STATUS.LOADING;
   const siteName = global?.siteName || "API Touch";
   const photoLogo = imageOf(global?.logo, siteName);
   const panelLogo = imageOf(global?.logoDark, siteName) ?? photoLogo;
@@ -470,11 +534,15 @@ export default function Navbar({ variant = "light" }) {
         }}
       >
         <a href="/" aria-label={siteName} className="shrink-0">
-          <img
-            src={logo}
-            alt={siteName}
-            className="block h-[42px] w-[84px] object-contain max-[1023.98px]:h-[36px] max-[1023.98px]:w-[72px]"
-          />
+          {logoLoading ? (
+            <LogoSkeleton />
+          ) : (
+            <img
+              src={logo}
+              alt={siteName}
+              className="block h-[42px] w-[84px] object-contain max-[1023.98px]:h-[36px] max-[1023.98px]:w-[72px]"
+            />
+          )}
         </a>
         <div className="ml-auto hidden items-center gap-6 min-[1024px]:flex">
           <nav className="flex items-center gap-6">

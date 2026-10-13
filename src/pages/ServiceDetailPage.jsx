@@ -1,9 +1,10 @@
 import PageShell from "../components/PageShell.jsx";
 import { PageHeader } from "../components/ui.jsx";
 import Blocks from "../components/Blocks.jsx";
-import { useStrapiList, hasContent, imageOf } from "../lib/strapiData.jsx";
+import { useStrapiList, hasContent, imageOf, STRAPI_STATUS } from "../lib/strapiData.jsx";
 import { blocksToText } from "../lib/strapi.js";
 import { usePageMeta } from "../lib/seo.js";
+import { ServiceDetailSkeleton } from "../components/skeletons.jsx";
 
 /**
  * One service, fetched by slug.
@@ -15,11 +16,12 @@ import { usePageMeta } from "../lib/seo.js";
  */
 export default function ServiceDetailPage() {
   const slug = window.location.pathname.split("/").filter(Boolean).pop() ?? "";
-  const { items, loading } = useStrapiList(
+  const { items, status } = useStrapiList(
     `services?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=image`
   );
 
-  const service = hasContent(items) ? items[0] : null;
+  const loading = status === STRAPI_STATUS.LOADING;
+  const service = !loading && hasContent(items) ? items[0] : null;
   const image = service ? imageOf(service.image, service.title) : null;
 
   usePageMeta({
@@ -27,19 +29,21 @@ export default function ServiceDetailPage() {
     description: service?.shortDescription || blocksToText(service?.description),
   });
 
-  // While the request is in flight there is nothing true to show yet, and
-  // flashing either the empty header or the not-found copy would be a lie.
+  // While the request is in flight there is nothing true to show yet: the
+  // header, the banner, the body column and the actions are held at exactly the
+  // sizes the loaded page uses, so nothing shifts when the entry arrives.
   if (loading) {
     return (
       <PageShell faq={false}>
-        <section className="page-sec container-x" />
+        <ServiceDetailSkeleton />
       </PageShell>
     );
   }
 
-  // Strapi answers with an empty list for a slug that does not exist, which is
-  // the same state as "Strapi is unreachable" here: either way there is no
-  // service to describe, so both land on the not-found copy.
+  // Reached only once the request has finished. Strapi answers with an empty
+  // list for a slug that does not exist, which is the same state as "Strapi is
+  // unreachable" here: either way there is no service to describe, so both land
+  // on the not-found copy.
   if (!service) {
     return (
       <PageShell faq={false}>

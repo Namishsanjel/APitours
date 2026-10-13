@@ -2,7 +2,8 @@ import { useState } from "react";
 import { FAQ_SECTION, FAQS } from "../data/content.js";
 import { Eyebrow } from "./ui.jsx";
 import Blocks from "./Blocks.jsx";
-import { useStrapiList, hasContent } from "../lib/strapiData.jsx";
+import { useStrapiList, hasContent, STRAPI_STATUS } from "../lib/strapiData.jsx";
+import { FaqSkeleton } from "./skeletons.jsx";
 
 function PlusIcon() {
   return (
@@ -29,12 +30,19 @@ function CloseIcon() {
  * The accordion column alone — reused by the FAQ page.
  *
  * Questions come from Strapi when it has any; the answer is then a blocks
- * field rendered through the site type tokens. With no CMS entries the original
- * five question/answer strings are used, so the block is never empty.
+ * field rendered through the site type tokens. While that request is in flight
+ * a stack of closed rows stands in, at the same 61px height and the same
+ * 798px measure, so the section does not change height on arrival. With no CMS
+ * entries the original five question/answer strings are used, so the block is
+ * never empty.
  */
 export function FaqList({ className = "w-full min-w-0" }) {
   const [open, setOpen] = useState(0);
-  const { items } = useStrapiList("faqs?sort=order:asc");
+  const { items, status } = useStrapiList("faqs?sort=order:asc");
+
+  if (status === STRAPI_STATUS.LOADING) {
+    return <FaqSkeleton count={FAQS.length} className={className} />;
+  }
 
   const entries = hasContent(items)
     ? items.map((f) => ({ key: f.documentId ?? f.id ?? f.question, q: f.question, a: f.answer }))

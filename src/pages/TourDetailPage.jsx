@@ -6,9 +6,17 @@ import { GALLERY } from "../data/pages.js";
 import JsonLd from "../components/JsonLd.jsx";
 import { breadcrumbJsonLd, tourBreadcrumbs, tourJsonLd } from "../lib/jsonld.js";
 import { usePageMeta } from "../lib/seo.js";
-import { GALLERY_PATH, useStrapiList, hasContent, useStrapiTours, useStrapiDestinations } from "../lib/strapiData.jsx";
+import {
+  GALLERY_PATH,
+  useStrapiList,
+  hasContent,
+  useStrapiToursState,
+  useStrapiDestinations,
+  STRAPI_STATUS,
+} from "../lib/strapiData.jsx";
 import { tourListings, asTourDetail, galleryItems, destinationList } from "../lib/catalog.js";
 import { rememberTour } from "../lib/prefill.js";
+import { TourDetailSkeleton, GalleryStripSkeleton } from "../components/skeletons.jsx";
 
 const SHARED_GALLERY = GALLERY.columns.flat().map((c) => c.src);
 
@@ -37,16 +45,20 @@ function Arrow({ dir }) {
 
 export default function TourDetailPage() {
   const slug = window.location.pathname.split("/").filter(Boolean).pop() ?? "";
-  const strapiTours = useStrapiTours();
+  const { data: strapiTours, status: toursStatus } = useStrapiToursState();
   const strapiDestinations = useStrapiDestinations();
   // The shared site gallery, fetched only for a tour that turns out to have no
   // photos of its own. Same path string as GalleryPage, so the 60s cache hands
   // back the request that page already made.
-  const { items: strapiGallery } = useStrapiList(GALLERY_PATH);
+  const { items: strapiGallery, status: galleryStatus } = useStrapiList(GALLERY_PATH);
   const records = useMemo(() => tourListings(strapiTours), [strapiTours]);
   const record = records.find((h) => h.slug === slug) ?? null;
   const detail = record ? asTourDetail(record) : null;
   const [shot, setShot] = useState(0);
+
+  const loading = toursStatus === STRAPI_STATUS.LOADING;
+  // the photo strip has its own request; only that block waits on it
+  const galleryLoading = galleryStatus === STRAPI_STATUS.LOADING;
 
   const tagline = (detail?.overview ?? "").split("\n\n")[0] ?? "";
 
@@ -79,17 +91,22 @@ export default function TourDetailPage() {
     description: tagline,
   });
 
-  if (!record) {
-    // Still loading and nothing in the hardcoded list to show yet: an empty
-    // shell, rather than claiming the tour does not exist.
-    if (strapiTours === null) {
-      return (
-        <PageShell faq={false}>
-          <section className="page-sec container-x" />
-        </PageShell>
-      );
-    }
+  // Loading: the whole detail page is held — header, hero, itinerary column,
+  // booking sidebar — at the sizes the loaded page uses, for a known slug and an
+  // unknown one alike. Neither the hardcoded record for this slug nor the
+  // not-found copy may be shown yet: the first would be a claim the CMS has not
+  // confirmed, the second would be a lie while the answer is still on its way.
+  if (loading) {
+    return (
+      <PageShell faq={false}>
+        <TourDetailSkeleton />
+      </PageShell>
+    );
+  }
 
+  // Reached only once the request has finished. A slug Strapi and the
+  // hardcoded list both know nothing about is out of date or removed.
+  if (!record) {
     return (
       <PageShell faq={false}>
         <section className="page-sec container-x flex flex-col gap-6">
@@ -173,32 +190,36 @@ export default function TourDetailPage() {
 
           <div className="flex flex-col gap-4">
             <h2 className="t-h4 text-ink">Gallery</h2>
-            <div className="relative h-[240px] overflow-hidden rounded-lg min-[639.98px]:h-[300px] min-[1100px]:h-[380px]">
-              <img
-                key={shot}
-                src={gallery[shot]?.src}
-                alt={gallery[shot]?.alt ?? record.alt}
-                className="shot-in absolute inset-0 h-full w-full object-cover"
-              />
-              <div className="absolute bottom-4 right-4 z-10 flex gap-2">
-                <button
-                  type="button"
-                  aria-label="Previous photo"
-                  onClick={() => setShot((i) => (i - 1 + gallery.length) % gallery.length)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-mist text-ink"
-                >
-                  <Arrow dir="left" />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Next photo"
-                  onClick={() => setShot((i) => (i + 1) % gallery.length)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-mist text-ink"
-                >
-                  <Arrow dir="right" />
-                </button>
+            {galleryLoading ? (
+              <GalleryStripSkeleton />
+            ) : (
+              <div className="relative h-[240px] overflow-hidden rounded-lg min-[639.98px]:h-[300px] min-[1100px]:h-[380px]">
+                <img
+                  key={shot}
+                  src={gallery[shot]?.src}
+                  alt={gallery[shot]?.alt ?? record.alt}
+                  className="shot-in absolute inset-0 h-full w-full object-cover"
+                />
+                <div className="absolute bottom-4 right-4 z-10 flex gap-2">
+                  <button
+                    type="button"
+                    aria-label="Previous photo"
+                    onClick={() => setShot((i) => (i - 1 + gallery.length) % gallery.length)}
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-mist text-ink"
+                  >
+                    <Arrow dir="left" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Next photo"
+                    onClick={() => setShot((i) => (i + 1) % gallery.length)}
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-mist text-ink"
+                  >
+                    <Arrow dir="right" />
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-4">
