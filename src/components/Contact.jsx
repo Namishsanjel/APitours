@@ -1,31 +1,10 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { CONTACT } from "../data/content.js";
 import { STRAPI_URL } from "../lib/strapi.js";
 import { Eyebrow } from "./ui.jsx";
 import { Reveal } from "../anim.jsx";
-import { useStrapiTours } from "../lib/strapiData.jsx";
-import { tourTitles } from "../lib/catalog.js";
-
-function ChevronDown() {
-  return (
-    <svg
-      className="f-chevron"
-      width="11"
-      height="7"
-      viewBox="0 0 11 7"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M1 1 5.5 5.6 10 1"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
+import { useLocationSearch } from "../lib/location.jsx";
+import { usePrefilledValue, lastTour, TOUR_PLACEHOLDER, MAX } from "../lib/prefill.js";
 
 function Field({ label, htmlFor, error, children }) {
   return (
@@ -46,24 +25,18 @@ function Field({ label, htmlFor, error, children }) {
 /** Deliberately loose — enough to catch a typo, not to police real addresses. */
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-// the tour select has always opened on the first option, so that is the
-// starting value here too — controlled, but not empty
+// The tour field is free text and optional, so it starts empty. What it starts
+// as comes from prefill.js: ?tour= from a tour page's link, else the last tour
+// looked at, else nothing — it is never a dropdown default any more.
 const EMPTY = {
   name: "",
   email: "",
-  hike: CONTACT.form.hike.options[0] ?? "",
   date: "",
   message: "",
 };
 
 export default function Contact() {
   const { badge, title, image, imageAlt, info, form } = CONTACT;
-  const strapiTours = useStrapiTours();
-
-  // The tour list from Strapi in `order`, the hardcoded options when it has
-  // none. Both sources are plain titles, which is all this field stores.
-  const tours = useMemo(() => tourTitles(strapiTours), [strapiTours]);
-  const tourOptions = tours.length ? tours : form.hike.options;
 
   const [values, setValues] = useState(EMPTY);
   const [errors, setErrors] = useState({});
@@ -72,6 +45,12 @@ export default function Contact() {
   // Honeypot. Hidden from people and from assistive tech; a bot that fills it
   // in gets its submission dropped without a word.
   const [trap, setTrap] = useState("");
+
+  const tour = usePrefilledValue({
+    search: useLocationSearch(),
+    key: "tour",
+    fallback: () => lastTour().title,
+  });
 
   const set = (name) => (e) => {
     const { value } = e.target;
@@ -108,8 +87,9 @@ export default function Contact() {
     setServerError("");
 
     // Strapi rejects a create whose body carries fields it does not know, so
-    // the two optional ones are added only once they hold something. "which
-    // tour" opens on a value, so tour normally rides along; travelDate only
+    // the optional ones are added only once they hold something. The tour field
+    // is free text and may be left blank, so `tour` rides along only when the
+    // visitor (or a prefill) actually put something in it; travelDate only
     // appears if a date was actually picked.
     const data = {
       name: values.name.trim(),
@@ -129,6 +109,7 @@ export default function Contact() {
       if (!res.ok) throw new Error(`Strapi responded ${res.status} ${res.statusText}`);
 
       setValues(EMPTY);
+      tour.reset();
       setStatus("sent");
     } catch (err) {
       setStatus("error");
@@ -142,10 +123,9 @@ export default function Contact() {
 
   const sending = status === "sending";
 
-  // The stored choice stops being valid when the options swap under it (the
-  // CMS list arriving), so the select falls back to the first entry rather
-  // than silently showing nothing.
-  const tourValue = tourOptions.includes(values.hike) ? values.hike : tourOptions[0] ?? "";
+  // Cleared once on send, and trimmed on the way out: a free-text field can hold
+  // whitespace the select never could, and an all-spaces value is no value.
+  const tourValue = tour.value.trim();
 
   return (
     <section className="contact-sec">
@@ -220,22 +200,29 @@ export default function Contact() {
                 </Field>
 
                 <Field label={form.hike.label} htmlFor="contact-hike">
-                  <div className="relative">
-                    <select
-                      id="contact-hike"
-                      name="hike"
-                      className="f-control f-select"
-                      value={tourValue}
-                      onChange={set("hike")}
-                    >
-                      {tourOptions.map((o) => (
-                        <option key={o} value={o}>
-                          {o}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown />
-                  </div>
+                  <input
+                    id="contact-hike"
+                    name="hike"
+                    type="text"
+                    className={`f-control f-input ${errors.hike ? "f-invalid" : ""}`}
+                    placeholder={TOUR_PLACEHOLDER}
+                    maxLength={MAX}
+                    value={tour.value}
+                    onChange={tour.onChange}
+                    aria-invalid={errors.hike ? "true" : undefined}
+                    aria-describedby={
+                      tour.prefilled
+                        ? "contact-hike-hint"
+                        : errors.hike
+                          ? "contact-hike-error"
+                          : undefined
+                    }
+                  />
+                  {tour.prefilled ? (
+                    <p id="contact-hike-hint" className="t-eyebrow text-smoke">
+                      {tour.hint}
+                    </p>
+                  ) : null}
                 </Field>
 
                 <Field label={form.date.label} htmlFor="contact-date">

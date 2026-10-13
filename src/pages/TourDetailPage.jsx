@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PageShell from "../components/PageShell.jsx";
 import { PageHeader, ImgBlur } from "../components/ui.jsx";
 import TourCard from "../components/TourCard.jsx";
@@ -6,8 +6,9 @@ import { GALLERY } from "../data/pages.js";
 import JsonLd from "../components/JsonLd.jsx";
 import { breadcrumbJsonLd, tourBreadcrumbs, tourJsonLd } from "../lib/jsonld.js";
 import { usePageMeta } from "../lib/seo.js";
-import { GALLERY_PATH, useStrapiList, hasContent, useStrapiTours } from "../lib/strapiData.jsx";
-import { tourListings, asTourDetail, galleryItems } from "../lib/catalog.js";
+import { GALLERY_PATH, useStrapiList, hasContent, useStrapiTours, useStrapiDestinations } from "../lib/strapiData.jsx";
+import { tourListings, asTourDetail, galleryItems, destinationList } from "../lib/catalog.js";
+import { rememberTour } from "../lib/prefill.js";
 
 const SHARED_GALLERY = GALLERY.columns.flat().map((c) => c.src);
 
@@ -37,6 +38,7 @@ function Arrow({ dir }) {
 export default function TourDetailPage() {
   const slug = window.location.pathname.split("/").filter(Boolean).pop() ?? "";
   const strapiTours = useStrapiTours();
+  const strapiDestinations = useStrapiDestinations();
   // The shared site gallery, fetched only for a tour that turns out to have no
   // photos of its own. Same path string as GalleryPage, so the 60s cache hands
   // back the request that page already made.
@@ -47,6 +49,30 @@ export default function TourDetailPage() {
   const [shot, setShot] = useState(0);
 
   const tagline = (detail?.overview ?? "").split("\n\n")[0] ?? "";
+
+  // Remember this tour for the forms. The record's own `destination` is a slug
+  // when the CMS set the relation; the hardcoded records have no field for it,
+  // so the tour's slug is looked for in the destinations that list it — either
+  // way this is the name the visitor just read, not a slug. Keyed on primitives
+  // rather than on the record object, which is rebuilt on every list render.
+  const tourTitle = record?.title ?? "";
+  const tourSlug = record?.slug ?? "";
+  const tourRelation = record?.destination ?? "";
+  const destinationNames = destinationList(strapiDestinations);
+  let destinationName = "";
+  if (tourTitle) {
+    if (tourRelation) {
+      destinationName = destinationNames.find((d) => d.slug === tourRelation)?.name ?? "";
+    }
+    if (!destinationName) {
+      destinationName =
+        destinationNames.find((d) => (d.tours || []).includes(tourSlug))?.name ?? "";
+    }
+  }
+
+  useEffect(() => {
+    if (tourTitle) rememberTour(tourTitle, destinationName);
+  }, [tourTitle, destinationName]);
 
   usePageMeta({
     title: `${detail ? detail.title : "Tour"} — API Touch`,
@@ -222,7 +248,13 @@ export default function TourDetailPage() {
               {unit ? <span className="t-body">/{unit}</span> : null}
             </div>
 
-            <a href="/plan-your-trip" className="btn btn-dark h-[51px] w-full">
+            {/* To the contact form with this tour's title already in the field, so the
+                enquiry arrives knowing which tour it is about. encodeURIComponent
+                because titles carry spaces, ampersands and apostrophes. */}
+            <a
+              href={`/contact?tour=${encodeURIComponent(record.title)}`}
+              className="btn btn-dark h-[51px] w-full"
+            >
               Book This Tour
             </a>
           </div>

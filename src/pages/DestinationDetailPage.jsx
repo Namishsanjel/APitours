@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import PageShell from "../components/PageShell.jsx";
 import { PageHeader } from "../components/ui.jsx";
 import TourCard from "../components/TourCard.jsx";
@@ -9,6 +9,7 @@ import { breadcrumbJsonLd, destinationBreadcrumbs } from "../lib/jsonld.js";
 import { usePageMeta } from "../lib/seo.js";
 import { useStrapiTours, useStrapiDestinations } from "../lib/strapiData.jsx";
 import { tourListings, destinationBySlug } from "../lib/catalog.js";
+import { rememberDestination } from "../lib/prefill.js";
 
 function FactList({ title, items }) {
   return (
@@ -35,6 +36,13 @@ export default function DestinationDetailPage() {
   // The destination's own tours relation decides the list; the fallback
   // destination record carries the old slug array.
   const listings = useMemo(() => tourListings(strapiTours), [strapiTours]);
+
+  // Remember this destination by name for the plan-your-trip form, so a visitor
+  // who browses destinations and then plans a trip starts from the one they
+  // were reading. The adapter record carries the name from either source.
+  useEffect(() => {
+    if (dest?.name) rememberDestination(dest.name);
+  }, [dest]);
 
   usePageMeta({
     title: `${dest ? dest.name : "Destination"} — API Touch`,
@@ -84,7 +92,12 @@ export default function DestinationDetailPage() {
             <p className="t-h4 text-ink">Want {dest.name} built around you?</p>
             <p className="t-body">Tell us your dates and group size — we come back with a route and a price.</p>
           </div>
-          <a href="/plan-your-trip" className="btn btn-dark w-[160px]">
+          {/* To the plan-your-trip form with this destination's name already in
+              the field, encoded because names carry spaces and accents. */}
+          <a
+            href={`/plan-your-trip?destination=${encodeURIComponent(dest.name)}`}
+            className="btn btn-dark w-[160px]"
+          >
             Plan your trip
           </a>
         </div>

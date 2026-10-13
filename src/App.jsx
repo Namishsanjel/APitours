@@ -22,6 +22,7 @@ import JsonLd from "./components/JsonLd.jsx";
 import { organizationJsonLd, webSiteJsonLd } from "./lib/jsonld.js";
 import { useCanonical } from "./lib/seo.js";
 import { StrapiProvider } from "./lib/strapiData.jsx";
+import { LocationProvider } from "./lib/location.jsx";
 
 /** "/tours.html" | "/tours/" | "/tours"  ->  "/tours" */
 function normalize(path) {
@@ -95,8 +96,19 @@ export default function App() {
     return p;
   });
 
+  // The query string is tracked separately from the route, because it never
+  // affects which page renders — it is read by the two forms that prefill
+  // themselves from it (/contact?tour=…, /plan-your-trip?destination=…).
+  // Held as state so a client-side navigation to the *same* route with a
+  // different query (/contact -> /contact?tour=X) still reaches the form:
+  // setPath alone would bail out on an unchanged path and never re-render.
+  const [search, setSearch] = useState(() => window.location.search);
+
   useEffect(() => {
-    const onPop = () => setPath(resolve(window.location.pathname));
+    const onPop = () => {
+      setPath(resolve(window.location.pathname));
+      setSearch(window.location.search);
+    };
 
     const onClick = (e) => {
       if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
@@ -113,6 +125,7 @@ export default function App() {
         // or anything reading window.location sees the old one
         window.history.pushState({}, "", resolve(url.pathname) + url.search + url.hash);
         setPath(resolve(url.pathname));
+        setSearch(url.search);
         if (url.hash) {
           // wait for the new page to render, then jump to the section
           requestAnimationFrame(() => {
@@ -150,11 +163,13 @@ export default function App() {
     // StrapiProvider fetches /api/global once for the whole app so the header
     // and footer can read the site name, logo and contact details from it.
     <StrapiProvider>
-      <div className="relative min-h-screen bg-cream text-ink">
-        <JsonLd id="jsonld-organization" data={organizationJsonLd()} />
-        <JsonLd id="jsonld-website" data={webSiteJsonLd()} />
-        <Page />
-      </div>
+      <LocationProvider search={search}>
+        <div className="relative min-h-screen bg-cream text-ink">
+          <JsonLd id="jsonld-organization" data={organizationJsonLd()} />
+          <JsonLd id="jsonld-website" data={webSiteJsonLd()} />
+          <Page />
+        </div>
+      </LocationProvider>
     </StrapiProvider>
   );
 }

@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocationSearch } from "../lib/location.jsx";
+import { usePrefilledValue, lastDestination, DESTINATION_PLACEHOLDER, MAX } from "../lib/prefill.js";
 
 /** The 11x7 chevron the booking selects already use, pointed down. */
 function ChevronDown() {
@@ -136,15 +138,23 @@ function StepTrack({ current, furthest, onJump }) {
  * controlled value set, so stepping back and forth never loses an answer and
  * the last step submits the lot.
  */
-export default function TripForm({ form, destinations }) {
+export default function TripForm({ form }) {
   const [step, setStep] = useState(0);
   // furthest step reached — drives which dots are clickable
   const [furthest, setFurthest] = useState(0);
   const [errors, setErrors] = useState({});
+
+  // Free text, prefilled from ?destination= or the last destination viewed.
+  const destination = usePrefilledValue({
+    search: useLocationSearch(),
+    key: "destination",
+    fallback: lastDestination,
+  });
+
   const [values, setValues] = useState(() => ({
     name: "",
     email: "",
-    destination: destinations[0] ?? "",
+    destination: destination.value,
     date: "",
     group: form.group.options[0] ?? "",
     preferences: form.preferences.options[0] ?? "",
@@ -169,7 +179,7 @@ export default function TripForm({ form, destinations }) {
     heading.current?.focus();
   }, [step]);
 
-  const optionsOf = (name) => (name === "destination" ? destinations : form[name].options);
+  const optionsOf = (name) => form[name].options;
 
   const set = (name) => (e) => {
     const { value } = e.target;
@@ -212,19 +222,34 @@ export default function TripForm({ form, destinations }) {
 
     const id = `trip-${name}`;
     const invalid = Boolean(errors[name]);
-    const options = optionsOf(name);
+    // "destination" is free text now, not a list of the destinations we run
+    const options = name === "destination" ? null : optionsOf(name);
+
+    // the destination field is owned by its prefill hook, so it reads and writes
+    // through that rather than through the shared value set
     const shared = {
       id,
       name,
-      value: values[name],
-      onChange: set(name),
+      value: name === "destination" ? destination.value : values[name],
+      onChange: name === "destination" ? destination.onChange : set(name),
       "aria-invalid": invalid || undefined,
       "aria-describedby": invalid ? `${id}-error` : undefined,
     };
     const fieldClass = `f-control${invalid ? " f-invalid" : ""}`;
 
     let input;
-    if (options) {
+    if (name === "destination") {
+      input = (
+        <input
+          {...shared}
+          type="text"
+          className={`${fieldClass} f-input`}
+          placeholder={DESTINATION_PLACEHOLDER}
+          maxLength={MAX}
+          aria-describedby={destination.prefilled ? `${id}-hint` : shared["aria-describedby"]}
+        />
+      );
+    } else if (options) {
       input = (
         <div className="relative">
           <select {...shared} className={`${fieldClass} f-select`}>
@@ -249,6 +274,11 @@ export default function TripForm({ form, destinations }) {
     return (
       <Field key={name} label={spec.label} htmlFor={id} error={errors[name]}>
         {input}
+        {name === "destination" && destination.prefilled ? (
+          <p id={`${id}-hint`} className="t-eyebrow text-smoke">
+            {destination.hint}
+          </p>
+        ) : null}
       </Field>
     );
   };
