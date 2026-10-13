@@ -212,6 +212,8 @@ export function destinationToRecord(entry) {
     activities: (entry.activities || []).map((i) => i.text).filter(Boolean),
     bestTime: (entry.bestTime || []).map((i) => i.text).filter(Boolean),
     tours: (entry.tours || []).map((t) => t.slug),
+    // null on the hardcoded list, which has no order field — same as tourToRecord
+    order: entry.order ?? null,
     documentId: entry.documentId,
   };
 }

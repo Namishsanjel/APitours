@@ -1,16 +1,36 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NAV_LINKS, IMG } from "../data/content.js";
-import { DESTINATIONS_ALL, DESTINATIONS_PAGE } from "../data/newPages.js";
+import { DESTINATIONS_PAGE } from "../data/newPages.js";
 import { HIKES_PAGE } from "../data/hikes.js";
 import { ImgBlur } from "./ui.jsx";
 import { useReveal } from "../motion.js";
-import { useGlobal, useStrapiTours, imageOf } from "../lib/strapiData.jsx";
-import { tourListings } from "../lib/catalog.js";
+import { useGlobal, useStrapiTours, useStrapiDestinations, imageOf } from "../lib/strapiData.jsx";
+import { tourListings, destinationList } from "../lib/catalog.js";
 
 /** Tours as the listing records, from Strapi when it has any, else the data file. */
 function useTourListings() {
   const strapiTours = useStrapiTours();
   return useMemo(() => tourListings(strapiTours), [strapiTours]);
+}
+
+/**
+ * Destinations as the records the menus read, from Strapi when it has any, else
+ * the hardcoded list in newPages.js.
+ *
+ * The same provider and the same `destinationList` adapter DestinationsPage
+ * uses, so the bar and the page share one cached request — the destinations
+ * collection is fetched once in StrapiProvider, never once per mount.
+ */
+function useDestinations() {
+  const strapiDestinations = useStrapiDestinations();
+  return useMemo(() => {
+    // sorted on `order`, which Strapi returns as a number. The hardcoded
+    // fallback has no order field, so its entries all tie and a stable sort
+    // leaves them exactly where newPages.js put them.
+    return [...destinationList(strapiDestinations)].sort(
+      (a, b) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER),
+    );
+  }, [strapiDestinations]);
 }
 
 /** The 11x7 chevron the booking form's select already uses, pointed down. */
@@ -28,21 +48,34 @@ function ChevronDown({ className = "" }) {
   );
 }
 
-/** Regions read "Country · Area"; the list already shows the country. */
+/**
+ * Regions read "Country · Area"; the list already shows the country.
+ *
+ * Strapi's shortDescription uses the same shape ("India · Golden Triangle and
+ * beyond"), so this is unchanged — but an entry with no region, or one with no
+ * " · " in it, must not throw on the way to rendering the rest of the menu.
+ */
 function areaOf(dest) {
-  return dest.region.split("·").pop().trim();
+  return String(dest?.region ?? "").split("·").pop().trim();
 }
 
 /**
  * Destination preview — the destinations page card (photo + grad-card +
  * ImgBlur + glass region chip + name + cream CTA) at menu size, with the
  * page's body copy set beside the name.
+ *
+ * A destination with no image published renders as the same card over the
+ * mist background instead of an <img> with no src. Its height is a minimum
+ * rather than a fixed 300/380px, so with a longer list the card grows with the
+ * list beside it rather than leaving a gap under it.
  */
 function DestinationPreview({ dest }) {
   return (
     <a href={`/destinations/${dest.slug}`} className="relative min-w-0 flex-1 rounded-lg bg-mist p-1">
-      <div className="relative h-[300px] w-full overflow-hidden rounded min-[1100px]:h-[380px]">
-        <img src={dest.image} alt={dest.alt} className="absolute inset-0 h-full w-full object-cover" />
+      <div className="relative h-full min-h-[300px] w-full overflow-hidden rounded min-[1100px]:min-h-[380px]">
+        {dest.image ? (
+          <img src={dest.image} alt={dest.alt} className="absolute inset-0 h-full w-full object-cover" />
+        ) : null}
         <div className="grad-card absolute inset-0" />
         <ImgBlur />
         <div className="absolute inset-0 z-10 flex flex-col justify-between p-6">
@@ -68,14 +101,21 @@ function DestinationPreview({ dest }) {
  * filling the right, and the banner the page closes with underneath. Flush
  * with the nav bar above it — the bar itself turns white while this is open,
  * so the two read as one panel.
+ *
+ * The list is the Strapi one (`useDestinations`), already sorted on `order`.
+ * `destinationList` maps Strapi's continent enumeration back to the same
+ * labels DESTINATIONS_PAGE.groups is written in — south_america reads as
+ * "South America" here — so the grouping below is unchanged code.
  */
 function DestinationsMenu({ onNavigate }) {
-  const [active, setActive] = useState(DESTINATIONS_ALL[0].slug);
+  const destinations = useDestinations();
+  const [active, setActive] = useState(() => destinations[0]?.slug ?? null);
   const groups = DESTINATIONS_PAGE.groups
-    .map((group) => DESTINATIONS_ALL.filter((d) => d.continent === group))
+    .map((group) => destinations.filter((d) => d.continent === group))
     .filter((list) => list.length);
   const total = groups.reduce((n, list) => n + list.length, 0);
-  const current = DESTINATIONS_ALL.find((d) => d.slug === active) ?? DESTINATIONS_ALL[0];
+  const current = destinations.find((d) => d.slug === active) ?? destinations[0];
+  const currentSlug = current?.slug ?? null;
 
   return (
     <div id="nav-destinations-menu" className="absolute inset-x-0 top-full hidden min-[1024px]:block">
@@ -89,20 +129,23 @@ function DestinationsMenu({ onNavigate }) {
                 onClick={onNavigate}
                 onMouseEnter={() => setActive(d.slug)}
                 onFocus={() => setActive(d.slug)}
-                aria-current={d.slug === current.slug ? "true" : undefined}
+                aria-current={d.slug === currentSlug ? "true" : undefined}
                 className={`flex flex-1 items-center justify-between gap-3 rounded-lg px-3 transition-colors ${
-                  d.slug === current.slug ? "bg-mist" : "hover:bg-mist"
+                  d.slug === currentSlug ? "bg-mist" : "hover:bg-mist"
                 }`}
               >
-                <span className={`t-h6 min-w-0 truncate ${d.slug === current.slug ? "text-primary" : "text-ink"}`}>
+                <span className={`t-h6 min-w-0 truncate ${d.slug === currentSlug ? "text-primary" : "text-ink"}`}>
                   {d.name}
                 </span>
-                <span className="t-eyebrow-s shrink-0 text-smoke">{areaOf(d)}</span>
+                {/* the area can now be a whole phrase ("Golden Triangle and
+                    beyond"), so it truncates like the name rather than taking a
+                    fixed share the name then has to give back */}
+                <span className="t-eyebrow-s min-w-0 truncate text-smoke">{areaOf(d)}</span>
               </a>
             ))}
           </nav>
 
-          <DestinationPreview dest={current} />
+          {current ? <DestinationPreview dest={current} /> : null}
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-4 border-t border-ink/10 pt-5">
@@ -233,6 +276,7 @@ const MENUS = {
  */
 function MobileMenu({ open, onNavigate }) {
   const tours = useTourListings();
+  const destinations = useDestinations();
   const [group, setGroup] = useState(null);
 
   if (!open) return null;
@@ -258,7 +302,7 @@ function MobileMenu({ open, onNavigate }) {
               );
             }
 
-            const list = l.menu === "destinations" ? DESTINATIONS_ALL : tours;
+            const list = l.menu === "destinations" ? destinations : tours;
 
             return (
               <div key={l.label} className="border-b border-ink/10">
