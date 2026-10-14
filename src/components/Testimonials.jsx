@@ -1,8 +1,9 @@
-import { TESTIMONIAL_SECTION, FEATURED_QUOTE, REVIEWS, IMG } from "../data/content.js";
+import { TESTIMONIAL_SECTION, IMG } from "../data/content.js";
 import { SectionHead, HeadCopy } from "./ui.jsx";
 import Icon from "../data/Icon.jsx";
-import { useStrapiList, hasContent, imageOf, STRAPI_STATUS } from "../lib/strapiData.jsx";
+import { useStrapiList, imageOf, STRAPI_STATUS } from "../lib/strapiData.jsx";
 import { TestimonialsSkeleton } from "./skeletons.jsx";
+import { SectionError, SectionEmpty } from "./SectionError.jsx";
 
 function Location({ children, color }) {
   return (
@@ -52,22 +53,27 @@ function Attribution({ name, meta, color }) {
 }
 
 /**
- * Testimonials from Strapi, shaped the way the section already reads:
- * the entry flagged `featured` fills the big quote over the photo, the next
- * two fill the written cards. While the request is in flight the section shows
- * a skeleton at the same 420 / 495px featured block and the same two 236px
- * cards — never the hardcoded quote. With no CMS content, or none reachable,
- * the original featured quote and two reviews are used unchanged.
+ * Testimonials from Strapi, shaped the way the section already reads: the entry
+ * flagged `featured` fills the big quote over the photo, the next two fill the
+ * written cards.
+ *
+ * While the request is in flight the section shows a skeleton at the same 420 /
+ * 495px featured block and the same two 236px cards — never the hardcoded quote.
+ * An empty collection gets the neutral line, and a failed request gets the error
+ * state; neither falls back to FEATURED_QUOTE / REVIEWS, which are no longer
+ * imported. IMG.testimonial stays, but only as the featured card's decorative
+ * backdrop — the testimonials collection carries no image field, so that photo
+ * is part of the layout rather than a stand-in for missing content.
  */
 export default function Testimonials() {
-  const { items, status } = useStrapiList("testimonials?populate=avatar&sort=order:asc");
+  const { items, status, retry } = useStrapiList("testimonials?populate=avatar&sort=order:asc");
   const loading = status === STRAPI_STATUS.LOADING;
-  const fromStrapi = !loading && hasContent(items);
+  const ready = status === STRAPI_STATUS.READY && Array.isArray(items) && items.length > 0;
 
-  const featured = fromStrapi ? items.find((t) => t.featured) ?? items[0] : null;
-  const written = fromStrapi ? items.filter((t) => t !== featured).slice(0, 2) : [];
+  const featured = ready ? items.find((t) => t.featured) ?? items[0] : null;
+  const written = ready ? items.filter((t) => t !== featured).slice(0, 2) : [];
 
-  const big = fromStrapi
+  const big = ready
     ? {
         quote: featured.quote,
         name: featured.authorName,
@@ -77,27 +83,17 @@ export default function Testimonials() {
         // no image field, so the section keeps its existing backdrop
         image: IMG.testimonial,
       }
-    : { quote: FEATURED_QUOTE.quote, name: FEATURED_QUOTE.name, meta: FEATURED_QUOTE.trip, image: FEATURED_QUOTE.image };
+    : null;
 
-  const cards = fromStrapi
-    ? written.map((t) => ({
-        key: t.documentId ?? t.id ?? t.authorName,
-        title: t.quote,
-        body: "",
-        name: t.authorName,
-        meta: [t.authorRole, t.company].filter(Boolean).join(" · "),
-        rating: t.rating,
-        avatar: imageOf(t.avatar, t.authorName),
-      }))
-    : REVIEWS.map((r) => ({
-        key: r.name,
-        title: r.title,
-        body: r.body,
-        name: r.name,
-        meta: r.trip,
-        rating: null,
-        avatar: { src: r.avatar, alt: r.name },
-      }));
+  const cards = written.map((t) => ({
+    key: t.documentId ?? t.id ?? t.authorName,
+    title: t.quote,
+    body: "",
+    name: t.authorName,
+    meta: [t.authorRole, t.company].filter(Boolean).join(" · "),
+    rating: t.rating,
+    avatar: imageOf(t.avatar, t.authorName),
+  }));
 
   return (
     <section className="section-py">
@@ -111,6 +107,12 @@ export default function Testimonials() {
 
         {loading ? (
           <TestimonialsSkeleton />
+        ) : status === STRAPI_STATUS.ERROR ? (
+          /* the 420 / 495px featured block is dropped entirely rather than
+             replaced: a 1px rule across a 762px row would look like a bug */
+          <SectionError onRetry={retry} className="mt-8 min-[639.98px]:mt-12" />
+        ) : !ready ? (
+          <SectionEmpty className="mt-8 min-[639.98px]:mt-12" />
         ) : (
           <div className="mt-8 flex flex-col gap-6 min-[639.98px]:mt-12 min-[1100px]:flex-row">
             {/* featured quote over photo */}

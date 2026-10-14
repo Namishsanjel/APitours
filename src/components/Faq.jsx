@@ -2,8 +2,9 @@ import { useState } from "react";
 import { FAQ_SECTION, FAQS } from "../data/content.js";
 import { Eyebrow } from "./ui.jsx";
 import Blocks from "./Blocks.jsx";
-import { useStrapiList, hasContent, STRAPI_STATUS } from "../lib/strapiData.jsx";
+import { useStrapiList, STRAPI_STATUS } from "../lib/strapiData.jsx";
 import { FaqSkeleton } from "./skeletons.jsx";
+import { SectionError, SectionEmpty } from "./SectionError.jsx";
 
 function PlusIcon() {
   return (
@@ -29,24 +30,37 @@ function CloseIcon() {
 /**
  * The accordion column alone — reused by the FAQ page.
  *
- * Questions come from Strapi when it has any; the answer is then a blocks
- * field rendered through the site type tokens. While that request is in flight
- * a stack of closed rows stands in, at the same 61px height and the same
- * 798px measure, so the section does not change height on arrival. With no CMS
- * entries the original five question/answer strings are used, so the block is
- * never empty.
+ * Questions come from Strapi when it has any; the answer is a blocks field
+ * rendered through the site type tokens. While that request is in flight a stack
+ * of closed rows stands in, at the same 61px height and the same 798px measure,
+ * so the section does not change height on arrival.
+ *
+ * An empty collection gets the neutral line and a failed request the error
+ * state, both inside that same 798px column; neither renders the FAQS strings
+ * as if they were CMS content. FAQS is still imported, for one thing only: the
+ * skeleton is sized off how many questions the site has always shown.
  */
 export function FaqList({ className = "w-full min-w-0" }) {
   const [open, setOpen] = useState(0);
-  const { items, status } = useStrapiList("faqs?sort=order:asc");
+  const { items, status, retry } = useStrapiList("faqs?sort=order:asc");
 
+  /* the skeleton is unchanged: still sized off the same FAQS.length, and still
+     only ever shown while the request is in flight */
   if (status === STRAPI_STATUS.LOADING) {
     return <FaqSkeleton count={FAQS.length} className={className} />;
   }
 
-  const entries = hasContent(items)
+  if (status === STRAPI_STATUS.ERROR) {
+    return <SectionError onRetry={retry} className={`max-w-[798px] ${className}`} />;
+  }
+
+  const entries = Array.isArray(items)
     ? items.map((f) => ({ key: f.documentId ?? f.id ?? f.question, q: f.question, a: f.answer }))
-    : FAQS.map((f) => ({ key: f.q, q: f.q, a: f.a }));
+    : [];
+
+  if (!entries.length) {
+    return <SectionEmpty className={`max-w-[798px] ${className}`} />;
+  }
 
   return (
     <div className={`flex flex-col gap-4 [will-change:transform] ${className}`} style={{ maxWidth: 798 }}>

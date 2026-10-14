@@ -2,14 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import PageShell from "../components/PageShell.jsx";
 import { PageHeader, ImgBlur } from "../components/ui.jsx";
 import TourCard from "../components/TourCard.jsx";
-import { GALLERY } from "../data/pages.js";
 import JsonLd from "../components/JsonLd.jsx";
 import { breadcrumbJsonLd, tourBreadcrumbs, tourJsonLd } from "../lib/jsonld.js";
 import { usePageMeta } from "../lib/seo.js";
 import {
   GALLERY_PATH,
   useStrapiList,
-  hasContent,
   useStrapiToursState,
   useStrapiDestinations,
   STRAPI_STATUS,
@@ -17,8 +15,7 @@ import {
 import { tourListings, asTourDetail, galleryItems, destinationList } from "../lib/catalog.js";
 import { rememberTour } from "../lib/prefill.js";
 import { TourDetailSkeleton, GalleryStripSkeleton } from "../components/skeletons.jsx";
-
-const SHARED_GALLERY = GALLERY.columns.flat().map((c) => c.src);
+import { SectionError, SectionEmpty } from "../components/SectionError.jsx";
 
 function CheckIcon() {
   return (
@@ -45,12 +42,12 @@ function Arrow({ dir }) {
 
 export default function TourDetailPage() {
   const slug = window.location.pathname.split("/").filter(Boolean).pop() ?? "";
-  const { data: strapiTours, status: toursStatus } = useStrapiToursState();
+  const { data: strapiTours, status: toursStatus, retry: retryTours } = useStrapiToursState();
   const strapiDestinations = useStrapiDestinations();
   // The shared site gallery, fetched only for a tour that turns out to have no
   // photos of its own. Same path string as GalleryPage, so the 60s cache hands
   // back the request that page already made.
-  const { items: strapiGallery, status: galleryStatus } = useStrapiList(GALLERY_PATH);
+  const { items: strapiGallery, status: galleryStatus, retry: retryGallery } = useStrapiList(GALLERY_PATH);
   const records = useMemo(() => tourListings(strapiTours), [strapiTours]);
   const record = records.find((h) => h.slug === slug) ?? null;
   const detail = record ? asTourDetail(record) : null;
@@ -104,8 +101,35 @@ export default function TourDetailPage() {
     );
   }
 
-  // Reached only once the request has finished. A slug Strapi and the
-  // hardcoded list both know nothing about is out of date or removed.
+  /* The request failed, so nothing is known about this slug. Saying "this tour
+     could not be found" here would be a statement about the catalogue when the
+     truth is that the catalogue could not be reached; the not-found copy below
+     is now reserved for a request that succeeded and matched nothing. */
+  if (toursStatus === STRAPI_STATUS.ERROR) {
+    return (
+      <PageShell faq={false}>
+        <section className="page-sec container-x flex flex-col gap-6">
+          <SectionError onRetry={retryTours} />
+        </section>
+      </PageShell>
+    );
+  }
+
+  /* The collection succeeded but holds no tours at all. That is a different thing
+     from "this slug is unknown", so it is checked first: with nothing published
+     there is no catalogue to have failed to match. */
+  if (!records.length) {
+    return (
+      <PageShell faq={false}>
+        <section className="page-sec container-x flex flex-col gap-6">
+          <SectionEmpty />
+        </section>
+      </PageShell>
+    );
+  }
+
+  /* Reached only once the request has finished successfully and the collection
+     is not empty. A slug Strapi knows nothing about is out of date or removed. */
   if (!record) {
     return (
       <PageShell faq={false}>
@@ -122,15 +146,12 @@ export default function TourDetailPage() {
   const [bodyTagline = "", ...overview] = detail.overview.split("\n\n");
   const [amount, unit] = detail.price ? detail.price.split(" /") : [];
   const others = records.filter((h) => h.slug !== slug).slice(0, 2);
-  // The tour's own photos, or the shared site gallery when it has none. The CMS
-  // gallery is preferred over the hardcoded SHARED_GALLERY, and both carry their
-  // own alt text; the hardcoded fallback still borrows the tour's alt, because
-  // those files have none of their own.
-  const cmsGallery = galleryItems(hasContent(strapiGallery) ? strapiGallery[0]?.photos : null);
-  const sharedGallery = cmsGallery.length
-    ? cmsGallery.map(({ src, alt }) => ({ src, alt }))
-    : SHARED_GALLERY.map((src) => ({ src, alt: record.alt }));
-  const gallery = record.gallery?.length ? record.gallery : sharedGallery;
+  /* The tour's own photos, or the shared site gallery when it has none. The CMS
+     gallery is the only source now: when it errors the strip reports that and
+     offers a retry rather than filling itself with the hand-picked photos from
+     GALLERY, which are hardcoded copy for a collection we could not read. */
+  const cmsGallery = galleryItems(Array.isArray(strapiGallery) ? strapiGallery[0]?.photos : null);
+  const gallery = record.gallery?.length ? record.gallery : cmsGallery;
   const tourSchema = tourJsonLd({
     ...record,
     // structured values the schema already knows how to emit
@@ -192,6 +213,19 @@ export default function TourDetailPage() {
             <h2 className="t-h4 text-ink">Gallery</h2>
             {galleryLoading ? (
               <GalleryStripSkeleton />
+            ) : galleryStatus === STRAPI_STATUS.ERROR ? (
+              /* held at the strip's own 240 / 300 / 380px box, so the page does
+                 not jump when the retry brings the photos in */
+              <SectionError
+                onRetry={retryGallery}
+                className="flex h-[240px] items-center min-[639.98px]:h-[300px] min-[1100px]:h-[380px]"
+              />
+            ) : !gallery.length ? (
+              /* this tour published no photos and the shared gallery has none
+                 either: an empty frame in the same box, not a broken one */
+              <div className="relative h-[240px] overflow-hidden rounded-lg min-[639.98px]:h-[300px] min-[1100px]:h-[380px]">
+                <SectionEmpty className="h-full w-full justify-center" />
+              </div>
             ) : (
               <div className="relative h-[240px] overflow-hidden rounded-lg min-[639.98px]:h-[300px] min-[1100px]:h-[380px]">
                 <img

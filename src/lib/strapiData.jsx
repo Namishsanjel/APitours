@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { getStrapi, peekStrapi, asList, bestImage } from "./strapi.js";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { getStrapi, peekStrapi, invalidateStrapi, asList, bestImage } from "./strapi.js";
 
 /**
  * React bindings for the Strapi client.
@@ -13,14 +13,19 @@ import { getStrapi, peekStrapi, asList, bestImage } from "./strapi.js";
  *   "ready"   — Strapi answered with at least one entry. The CMS content
  *               renders.
  *   "error"   — the request failed, timed out after 8s, or the network is
- *               down. The hardcoded fallback renders.
+ *               down. The section renders an explicit error state with a
+ *               "Try again" button; it never renders the hardcoded copy,
+ *               because a copy standing in for content we failed to fetch is
+ *               a claim the CMS has not confirmed.
  *   "empty"   — the request succeeded but the collection has nothing in it.
- *               The hardcoded fallback renders, exactly as on a failure: an
- *               empty collection is an editorial state, not a rendering one.
+ *               An empty collection is an editorial state rather than a
+ *               failure, so it is never reported as an error: each section
+ *               either hides itself or shows one neutral line.
  *
- * The fallback is therefore reached through exactly one branch (error/empty)
- * rather than through the absence of data, which is what used to make a
- * section flash its hardcoded copy and then swap it out.
+ * Every reader also gets a `retry`, which clears that path's cached entry (see
+ * invalidateStrapi) and refetches it, so the section falls back through its own
+ * skeleton rather than through a page reload. The 8s timeout and the cached
+ * no-flash behaviour are unchanged.
  */
 
 /** The four statuses every reader reports. */
@@ -99,6 +104,77 @@ function initialState(path, list) {
 const StrapiContext = createContext(null);
 
 /**
+ * The bookkeeping behind every "Try again" button: one attempt counter per
+ * path, plus a record of which paths are currently in flight.
+ *
+ * The counter is what a retry bumps — the fetch effect depends on it, so
+ * bumping it re-runs that one request and nothing else. The in-flight set is
+ * what stops the button being spammed: a retry that lands while its own path is
+ * still fetching is ignored outright, and because a retry flips the reader back
+ * to "loading" (and therefore back to its skeleton, which has no button on it),
+ * there is no window in which the same path can be asked twice.
+ */
+function useRetryRegistry() {
+  const [attempts, setAttempts] = useState({});
+  const pending = useRef(new Set());
+
+  const retry = useCallback((path) => {
+    const key = String(path ?? "").trim();
+    if (!key || pending.current.has(key)) return;
+    // Drop the cached answer first: without this the retry would be handed the
+    // previous response by the 60s TTL and would look like it did nothing.
+    invalidateStrapi(key);
+    setAttempts((prev) => ({ ...prev, [key]: (prev[key] ?? 0) + 1 }));
+  }, []);
+
+  return { attempts, retry, pending };
+}
+
+/**
+ * One resource, fetched and published as { path, data, error, status }.
+ *
+ * Shared by the three collections StrapiProvider holds for the whole app and by
+ * useStrapiList below, so both get identical caching, retry and status rules
+ * from one implementation.
+ *
+ * A path whose response is already cached starts at "ready" and never mounts a
+ * skeleton; a path that changed re-reads the cache during render (initialState
+ * is a pure cache read), which is why navigating between two galleries does not
+ * flash.
+ */
+function useStrapiResource(path, list, { attempts, pending }) {
+  const attempt = attempts[path] ?? 0;
+  const [state, setState] = useState(() => initialState(path, list));
+
+  useEffect(() => {
+    let alive = true;
+    pending.current.add(path);
+
+    getStrapi(path)
+      .then((data) => {
+        if (alive) setState({ path, data: list ? asList(data) : data ?? null, error: null, status: settledStatus(data, list) });
+      })
+      .catch((error) => {
+        // Kept as a state rather than a thrown error: every consumer renders
+        // its own error state from "error", and the error object travels with it
+        // for anyone who wants to log it.
+        if (alive) setState({ path, data: null, error, status: STRAPI_STATUS.ERROR });
+      })
+      .finally(() => {
+        pending.current.delete(path);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [path, attempt, list, pending]);
+
+  // State belonging to a previous path is ignored rather than cleared inside the
+  // effect, which would cost a second render pass on every path change.
+  return state.path === path ? state : initialState(path, list);
+}
+
+/**
  * Fetches the global entry, the tours and the destinations once for the whole
  * app, and publishes each with its status.
  *
@@ -112,60 +188,50 @@ const StrapiContext = createContext(null);
  * a photo, `logoDark` the one on the cream panel.
  */
 export function StrapiProvider({ children }) {
-  const [global, setGlobal] = useState(() => initialState(GLOBAL_PATH, false));
-  const [tours, setTours] = useState(() => initialState(TOURS_PATH, true));
-  const [destinations, setDestinations] = useState(() => initialState(DESTINATIONS_PATH, true));
+  const { attempts, retry, pending } = useRetryRegistry();
 
-  useEffect(() => {
-    let alive = true;
+  const global = useStrapiResource(GLOBAL_PATH, false, { attempts, pending });
+  const tours = useStrapiResource(TOURS_PATH, true, { attempts, pending });
+  const destinations = useStrapiResource(DESTINATIONS_PATH, true, { attempts, pending });
 
-    const read = (path, list, set) => {
-      getStrapi(path)
-        .then((data) => {
-          if (!alive) return;
-          const value = list ? asList(data) : data ?? null;
-          set({ path, data: value, error: null, status: settledStatus(value, list) });
-        })
-        .catch((error) => {
-          // Kept as a state rather than a thrown error: every consumer renders
-          // its own fallback from "error", and the error object travels with it
-          // for anyone who wants to log it.
-          if (alive) set({ path, data: null, error, status: STRAPI_STATUS.ERROR });
-        });
-    };
-
-    read(GLOBAL_PATH, false, setGlobal);
-    read(TOURS_PATH, true, setTours);
-    read(DESTINATIONS_PATH, true, setDestinations);
-
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  const value = useMemo(() => ({ global, tours, destinations }), [global, tours, destinations]);
+  // Each published slot carries its own resource's retry, bound to that
+  // resource's path, so a caller never has to know which path a reader used.
+  const value = useMemo(
+    () => ({
+      global: { ...global, retry: () => retry(GLOBAL_PATH) },
+      tours: { ...tours, retry: () => retry(TOURS_PATH) },
+      destinations: { ...destinations, retry: () => retry(DESTINATIONS_PATH) },
+    }),
+    [global, tours, destinations, retry],
+  );
 
   return <StrapiContext.Provider value={value}>{children}</StrapiContext.Provider>;
 }
 
 /**
  * What a reader gets with no provider above it. Nothing is in flight and
- * nothing has loaded, so the resource reads as empty — every caller falls back
- * to its hardcoded copy, which is the safe direction to be wrong in.
+ * nothing has loaded, so the resource reads as empty — an explicit state every
+ * caller renders as "nothing to show yet", never as content.
  */
-const NO_PROVIDER = { path: null, data: null, error: null, status: STRAPI_STATUS.EMPTY };
+const NO_PROVIDER = {
+  path: null,
+  data: null,
+  error: null,
+  status: STRAPI_STATUS.EMPTY,
+  retry: () => {},
+};
 
-/** The global entry as { data, status } — the header and the footer's data. */
+/** The global entry as { data, status, retry } — the header and the footer's data. */
 export function useGlobalState() {
   return useContext(StrapiContext)?.global ?? NO_PROVIDER;
 }
 
-/** Raw Strapi tour entries as { data, status }. */
+/** Raw Strapi tour entries as { data, status, retry }. */
 export function useStrapiToursState() {
   return useContext(StrapiContext)?.tours ?? NO_PROVIDER;
 }
 
-/** Raw Strapi destination entries as { data, status }. */
+/** Raw Strapi destination entries as { data, status, retry }. */
 export function useStrapiDestinationsState() {
   return useContext(StrapiContext)?.destinations ?? NO_PROVIDER;
 }
@@ -193,9 +259,10 @@ export function useStrapiDestinations() {
 /**
  * Reads any collection (or a filtered one) from Strapi.
  *
- * Returns { items, error, loading, status } — and `data`, the same array under
- * the name the other hooks use, so a caller can destructure either. `items` is
- * kept for every existing caller; `loading` is kept for the one that reads it.
+ * Returns { items, data, error, loading, status, path, retry } — `data` being
+ * the same array under the name the other hooks use, so a caller can
+ * destructure either. `items` is kept for every existing caller; `loading` is
+ * kept for the one that reads it.
  *
  *   status  "loading" | "ready" | "error" | "empty"
  *
@@ -203,29 +270,13 @@ export function useStrapiDestinations() {
  * second reader of the same path never shows a skeleton. A path that changed
  * re-reads the cache during render (initialState is a pure cache read), which
  * is why navigating from one tour's gallery to another's does not flash.
+ *
+ * `retry` clears this path's cached entry and refetches it. It is a no-op while
+ * a request for the same path is already in flight.
  */
 export function useStrapiList(path) {
-  const [state, setState] = useState(() => initialState(path, true));
-
-  useEffect(() => {
-    let alive = true;
-
-    getStrapi(path)
-      .then((data) => {
-        if (alive) setState({ path, data: asList(data), error: null, status: settledStatus(data, true) });
-      })
-      .catch((error) => {
-        if (alive) setState({ path, data: null, error, status: STRAPI_STATUS.ERROR });
-      });
-
-    return () => {
-      alive = false;
-    };
-  }, [path]);
-
-  // State belonging to the previous path is ignored rather than cleared inside
-  // the effect, which would cost a second render pass on every path change.
-  const current = state.path === path ? state : initialState(path, true);
+  const { attempts, retry, pending } = useRetryRegistry();
+  const current = useStrapiResource(path, true, { attempts, pending });
 
   return {
     items: current.data,
@@ -235,6 +286,9 @@ export function useStrapiList(path) {
     status: current.status,
     // still waiting on the first answer for this path
     loading: current.status === STRAPI_STATUS.LOADING,
+    /** The path this state belongs to — the one `retry` clears and refetches. */
+    path,
+    retry: () => retry(path),
   };
 }
 

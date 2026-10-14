@@ -1,4 +1,4 @@
-import { FOOTER, IMG } from "../data/content.js";
+import { FOOTER } from "../data/content.js";
 import { useGlobalState, imageOf, STRAPI_STATUS } from "../lib/strapiData.jsx";
 import { FooterBrandSkeleton, FooterLogomarkSkeleton } from "./skeletons.jsx";
 
@@ -13,34 +13,57 @@ function platformLabel(platform) {
 // under a component that happens to be holding on to this text.
 const YEAR = new Date().getFullYear();
 
+/**
+ * The footer's brand mark: the CMS logo when the global entry carries one, the
+ * site's text name when it does not.
+ *
+ * Declared outside the component so React is not handed a brand new component
+ * type on every render, which would unmount and remount the node each time.
+ */
+function BrandMark({ logo, siteName, className = "" }) {
+  if (logo) return <img src={logo} alt={siteName} className={className} />;
+  // flex + items-center centres the name in the same fixed-height box the image
+  // occupied, so the column below it does not move
+  return <p className={`t-h4 flex items-center text-ink ${className}`}>{siteName}</p>;
+}
+
 export default function Footer() {
   const { title, body, cta, ctaHref, background, backgroundAlt, subline, copyright, columns } = FOOTER;
   const { data: global, status: globalStatus } = useGlobalState();
 
   // The logo, the closing line and the contact details all come out of the same
   // global entry, so while it is in flight the whole brand column is held as a
-  // neutral placeholder rather than answered with the hardcoded name and logo.
-  // The copyright line is the site's own and is always shown.
+  // neutral placeholder. The copyright line is the site's own and is always
+  // shown.
   const loading = globalStatus === STRAPI_STATUS.LOADING;
+  /* An error is not an error state here. The footer is chrome, not content: it
+     is the one place a visitor must still be able to reach every page, so it
+     degrades to the site's static half rather than showing a message. With no
+     global entry the logo becomes the site's text name (the same name the <img>
+     alt carried), the closing line and the contact block drop out, and the
+     static link columns and the copyright stay exactly where they are. */
+  const degraded = globalStatus === STRAPI_STATUS.ERROR || globalStatus === STRAPI_STATUS.EMPTY;
 
-  const siteName = global?.siteName || "";
-  const cmsLogo = imageOf(global?.logo, siteName || "API Touch");
-  const logo = cmsLogo?.src || IMG.logo;
+  const siteName = global?.siteName || "API Touch";
+  const cmsLogo = imageOf(global?.logo, siteName);
+  const logo = cmsLogo?.src || null;
 
   // footerText is the closing line of the footer, so it takes the subline's
   // place; the hardcoded one stays until Strapi has something to say.
   const closingLine = global?.footerText || subline;
-  const copyrightLine = siteName ? `© ${YEAR} ${siteName}` : copyright;
+  const copyrightLine = global?.siteName ? `© ${YEAR} ${global.siteName}` : copyright;
 
-  const contacts = [
-    global?.contactEmail ? { label: "Email", value: global.contactEmail, href: `mailto:${global.contactEmail}` } : null,
-    global?.contactPhone ? { label: "Phone", value: global.contactPhone, href: `tel:${String(global.contactPhone).replace(/[^+\d]/g, "")}` } : null,
-    global?.address ? { label: "Address", value: global.address, href: null } : null,
-  ].filter(Boolean);
+  const contacts = degraded
+    ? []
+    : [
+        global?.contactEmail ? { label: "Email", value: global.contactEmail, href: `mailto:${global.contactEmail}` } : null,
+        global?.contactPhone ? { label: "Phone", value: global.contactPhone, href: `tel:${String(global.contactPhone).replace(/[^+\d]/g, "")}` } : null,
+        global?.address ? { label: "Address", value: global.address, href: null } : null,
+      ].filter(Boolean);
 
   // The Social column keeps its place in the grid; only its links come from
   // Strapi. Without them the original "coming soon" placeholders stay.
-  const socials = Array.isArray(global?.socialLinks)
+  const socials = !degraded && Array.isArray(global?.socialLinks)
     ? global.socialLinks.filter((l) => l && l.url && l.platform)
     : [];
   const linkColumns = socials.length
@@ -50,6 +73,10 @@ export default function Footer() {
           : col
       )
     : columns;
+
+  /* No logo image available: the site's name stands in as text, in the same
+     46px box the image occupied so the column does not change height. */
+  const brandMarkClass = "block h-[46px] w-[92px] object-contain max-[639.98px]:h-[40px] max-[639.98px]:w-[80px]";
 
   return (
     <footer className="relative overflow-hidden bg-cream">
@@ -81,12 +108,8 @@ export default function Footer() {
               <FooterBrandSkeleton />
             ) : (
               <>
-                <img
-                  src={logo}
-                  alt={siteName || "API Touch"}
-                  className="block h-[46px] w-[92px] object-contain max-[639.98px]:h-[40px] max-[639.98px]:w-[80px]"
-                />
-                <p className="t-body mt-4 text-sage [will-change:transform]">{closingLine}</p>
+                <BrandMark logo={logo} siteName={siteName} className={brandMarkClass} />
+                {!degraded ? <p className="t-body mt-4 text-sage [will-change:transform]">{closingLine}</p> : null}
 
                 {/* contact details, only once Strapi's global entry carries them */}
                 {contacts.length ? (
@@ -154,9 +177,9 @@ export default function Footer() {
         <div className="logomark-mask mt-10 min-[639.98px]:mt-[60px]">
           {loading ? (
             <FooterLogomarkSkeleton />
-          ) : (
+          ) : logo ? (
             <img src={logo} alt="" className="mx-auto block h-[100px] w-[200px] object-contain min-[639.98px]:h-[150px] min-[639.98px]:w-[300px]" />
-          )}
+          ) : null}
           <div className="h-0 min-[639.98px]:h-[133.75px]" />
         </div>
       </div>

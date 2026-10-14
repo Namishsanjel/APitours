@@ -1,10 +1,11 @@
 import PageShell from "../components/PageShell.jsx";
 import { PageHeader } from "../components/ui.jsx";
 import Blocks from "../components/Blocks.jsx";
-import { useStrapiList, hasContent, imageOf, STRAPI_STATUS } from "../lib/strapiData.jsx";
+import { useStrapiList, imageOf, STRAPI_STATUS } from "../lib/strapiData.jsx";
 import { blocksToText } from "../lib/strapi.js";
 import { usePageMeta } from "../lib/seo.js";
 import { ServiceDetailSkeleton } from "../components/skeletons.jsx";
+import { SectionError } from "../components/SectionError.jsx";
 
 /**
  * One service, fetched by slug.
@@ -16,12 +17,12 @@ import { ServiceDetailSkeleton } from "../components/skeletons.jsx";
  */
 export default function ServiceDetailPage() {
   const slug = window.location.pathname.split("/").filter(Boolean).pop() ?? "";
-  const { items, status } = useStrapiList(
+  const { items, status, retry } = useStrapiList(
     `services?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=image`
   );
 
   const loading = status === STRAPI_STATUS.LOADING;
-  const service = !loading && hasContent(items) ? items[0] : null;
+  const service = status === STRAPI_STATUS.READY && Array.isArray(items) ? items[0] ?? null : null;
   const image = service ? imageOf(service.image, service.title) : null;
 
   usePageMeta({
@@ -40,10 +41,21 @@ export default function ServiceDetailPage() {
     );
   }
 
-  // Reached only once the request has finished. Strapi answers with an empty
-  // list for a slug that does not exist, which is the same state as "Strapi is
-  // unreachable" here: either way there is no service to describe, so both land
-  // on the not-found copy.
+  /* The request failed. This is now distinct from "no such service": telling the
+     visitor their link is out of date, when the truth is that the catalogue
+     could not be reached, sends them away from a page that is probably fine. */
+  if (status === STRAPI_STATUS.ERROR) {
+    return (
+      <PageShell faq={false}>
+        <section className="page-sec container-x flex flex-col gap-6">
+          <SectionError onRetry={retry} />
+        </section>
+      </PageShell>
+    );
+  }
+
+  // The request succeeded. An empty list means Strapi has no service under this
+  // slug, so the not-found copy is now a true statement.
   if (!service) {
     return (
       <PageShell faq={false}>

@@ -2,11 +2,12 @@ import { useEffect } from "react";
 import Navbar from "../components/Navbar.jsx";
 import Faq from "../components/Faq.jsx";
 import Footer from "../components/Footer.jsx";
-import { Eyebrow, SectionHead, HeadCopy, ImgBlur, Words } from "../components/ui.jsx";
+import { Eyebrow, SectionHead, HeadCopy, Words } from "../components/ui.jsx";
 import { ABOUT } from "../data/pages.js";
 import { PAGES } from "../data/content.js";
-import { useStrapiList, hasContent, imageOf, STRAPI_STATUS } from "../lib/strapiData.jsx";
+import { useStrapiList, imageOf, STRAPI_STATUS } from "../lib/strapiData.jsx";
 import { TeamSkeleton } from "../components/skeletons.jsx";
+import { SectionError, SectionEmpty } from "../components/SectionError.jsx";
 
 /**
  * A team member from Strapi. The photo card sits on top rather than behind the
@@ -47,8 +48,8 @@ function MemberCard({ member }) {
 
 export default function AboutPage() {
   const page = PAGES["/about"];
-  const { items, status } = useStrapiList("team-members?populate=photo&sort=order:asc");
-  const fromStrapi = status === STRAPI_STATUS.READY && hasContent(items);
+  const { items, status, retry } = useStrapiList("team-members?populate=photo&sort=order:asc");
+  const ready = status === STRAPI_STATUS.READY && Array.isArray(items) && items.length > 0;
 
   useEffect(() => {
     document.title = page.title;
@@ -149,29 +150,21 @@ export default function AboutPage() {
             <HeadCopy>{ABOUT.guides.body}</HeadCopy>
           </SectionHead>
           {/* While the request is in flight the grid holds the CMS card shape at its own
-              height. Strapi team members when there are any; the original six
-              photo cards when there are not, so this section is never empty. */}
+              height. Strapi team members when there are any; an error state with
+              its own retry when the request failed; one neutral line when the
+              collection is empty. The original six photo cards (ABOUT.guides.people)
+              are no longer rendered here — the rest of this page's copy is the
+              site's own, but the guide list itself is CMS-owned. */}
           {status === STRAPI_STATUS.LOADING ? (
             <TeamSkeleton />
-          ) : fromStrapi ? (
+          ) : status === STRAPI_STATUS.ERROR ? (
+            <SectionError onRetry={retry} />
+          ) : !ready ? (
+            <SectionEmpty />
+          ) : (
             <div className="grid grid-cols-1 gap-6 min-[639.98px]:grid-cols-2 min-[1100px]:grid-cols-3">
               {items.map((m) => (
                 <MemberCard key={m.documentId ?? m.id ?? m.name} member={m} />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-6 min-[639.98px]:grid-cols-2 min-[1100px]:grid-cols-3">
-              {ABOUT.guides.people.map((g) => (
-                <div key={g.name} className="relative h-[420px] overflow-hidden rounded-lg min-[1100px]:h-[501px]">
-                  <img src={g.image} alt={g.name} className="absolute inset-0 h-full w-full object-cover" />
-                  <ImgBlur />
-                  <div className="absolute inset-0 z-10 flex flex-col justify-end gap-1 p-4">
-                    <Eyebrow className="capitalize" color="var(--color-mist)">
-                      {g.role}
-                    </Eyebrow>
-                    <h4 className="t-h4 text-mist">{g.name}</h4>
-                  </div>
-                </div>
               ))}
             </div>
           )}

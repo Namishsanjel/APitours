@@ -12,6 +12,7 @@ import { PAGES } from "../data/content.js";
 import { useStrapiToursState, useStrapiDestinations, STRAPI_STATUS } from "../lib/strapiData.jsx";
 import { tourListings, destinationList, budgetOf } from "../lib/catalog.js";
 import { HikesPageSkeleton } from "../components/skeletons.jsx";
+import { SectionError, SectionEmpty } from "../components/SectionError.jsx";
 
 function HikeCard({ hike, className = "", index = null }) {
   const rv = useReveal({ delay: index == null ? 0 : stagger(index) });
@@ -166,7 +167,7 @@ const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const BUDGETS = ["Under $700", "$700 – $1,000", "$1,000+"];
 
 export default function HikesPage() {
-  const { data: strapiTours, status: toursStatus } = useStrapiToursState();
+  const { data: strapiTours, status: toursStatus, retry: retryTours } = useStrapiToursState();
   const strapiDestinations = useStrapiDestinations();
 
   // Still in flight: the grid, the filters and the count are all read off the
@@ -174,7 +175,8 @@ export default function HikesPage() {
   // the hardcoded list.
   const loading = toursStatus === STRAPI_STATUS.LOADING;
 
-  // Strapi when it has entries, the hardcoded lists otherwise.
+  // Strapi's own tours. An errored or empty collection maps to an empty list,
+  // and the two explicit states below say which of those it is.
   const list0 = useMemo(() => tourListings(strapiTours), [strapiTours]);
   const destinations = useMemo(() => destinationList(strapiDestinations), [strapiDestinations]);
 
@@ -279,6 +281,12 @@ export default function HikesPage() {
           {/* filters (collapsed into one dropdown) + gallery-style grid */}
           {loading ? (
             <HikesPageSkeleton />
+          ) : toursStatus === STRAPI_STATUS.ERROR ? (
+            /* the filter menu and the "N of M tours" count are both read off
+               the collection, so they go with it */
+            <SectionError onRetry={retryTours} />
+          ) : !list0.length ? (
+            <SectionEmpty />
           ) : (
             <div className="flex flex-col gap-6">
               <div className="flex items-center justify-between gap-4">

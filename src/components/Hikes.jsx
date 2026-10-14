@@ -1,10 +1,11 @@
 import { useMemo } from "react";
-import { HIKES_SECTION, HIKES } from "../data/content.js";
+import { HIKES_SECTION } from "../data/content.js";
 import { SectionHead, HeadCopy } from "./ui.jsx";
 import { useReveal, stagger } from "../motion.js";
 import { useStrapiToursState, STRAPI_STATUS } from "../lib/strapiData.jsx";
 import { featuredTours } from "../lib/catalog.js";
 import { HikesSectionSkeleton } from "./skeletons.jsx";
+import { SectionError, SectionEmpty } from "./SectionError.jsx";
 
 /**
  * One tour card.
@@ -84,13 +85,18 @@ function reflowGrid(count) {
 const MOSAIC_CARDS = ["min-[1100px]:row-span-2", "", "", "min-[1100px]:col-span-2"];
 
 export default function Hikes() {
-  const { data: strapiTours, status } = useStrapiToursState();
+  const { data: strapiTours, status, retry } = useStrapiToursState();
   /* The tours Strapi marks featured, already sorted on `order` and capped at
      four by featuredTours(). A CMS list of one, two, three or a dozen therefore
-     arrives here the right length: nothing is dropped, nothing is invented. With
-     no CMS entries at all the original four from content.js stand in. */
+     arrives here the right length: nothing is dropped, nothing is invented.
+
+     Error and empty are no longer answered with the original four from
+     content.js. A failed request now shows the error state and an empty
+     collection one neutral line; both keep this section's header, because the
+     header carries the two static links ("Browse by experience" and the tours
+     CTA) that are useful whether or not the CMS has tours published. */
   const picks = useMemo(() => featuredTours(strapiTours, 4), [strapiTours]);
-  const tours = picks.length ? picks : HIKES;
+  const tours = picks;
   const mosaic = tours.length >= 4;
 
   return (
@@ -116,6 +122,12 @@ export default function Hikes() {
             four would then move every card on the page. */}
         {status === STRAPI_STATUS.LOADING ? (
           <HikesSectionSkeleton />
+        ) : status === STRAPI_STATUS.ERROR ? (
+          /* an unreachable CMS, so the section says so rather than showing four
+             tours that may no longer exist */
+          <SectionError onRetry={retry} className="mt-12" />
+        ) : status === STRAPI_STATUS.EMPTY ? (
+          <SectionEmpty className="mt-12" />
         ) : (
           <div className={mosaic ? MOSAIC_GRID : reflowGrid(tours.length)}>
             {tours.map((hike, i) => (

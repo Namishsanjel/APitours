@@ -8,10 +8,20 @@ import { GALLERY } from "../data/pages.js";
  * Turns Strapi tours and destinations into the shapes the existing components
  * already read, so the pages barely have to change.
  *
- * Every function here falls back to the hardcoded data module when Strapi has
- * nothing to give: `items` is null while loading, on a request failure, and
- * while the collection is empty. Nothing in the site's data files is removed —
- * they remain the source of truth whenever the CMS is silent.
+ * These adapters are pure shape conversions. They no longer stand in for the
+ * CMS: a collection that failed to load, or that came back empty, maps to an
+ * empty array, and the caller decides what an absent collection looks like (an
+ * error state, a neutral line, or a hidden section). Substituting the
+ * hardcoded data module here made an unreachable CMS indistinguishable from an
+ * empty one, and a detail page reached that way rendered a tour the CMS had
+ * never confirmed existed.
+ *
+ * Two things deliberately survive, because neither is a response to the request
+ * failing or being empty:
+ *   - the data modules stay imported and exported, for cleanup in their own time;
+ *   - a *single* entry missing one field (its cover image, its region) is still
+ *     filled from the matching hardcoded record, so an editor who has not
+ *     uploaded a photo yet does not leave a card without one.
  */
 
 /** Strapi stores the difficulty lowercase; the site shows it capitalised. */
@@ -129,11 +139,15 @@ export function tourToRecord(entry) {
 }
 
 /**
- * Strapi tours as listing records, or the hardcoded HIKES_ALL when there are
- * none to use.
+ * Strapi tours as listing records.
+ *
+ * Empty in, empty out: a collection that errored, is still loading, or is
+ * genuinely empty all produce `[]`, and the caller renders that state for what
+ * it is. The old behaviour — handing back the hardcoded HIKES_ALL here — meant
+ * three different states reached the page as the same ten cards.
  */
 export function tourListings(entries) {
-  if (!Array.isArray(entries) || entries.length === 0) return hardcodedTours();
+  if (!Array.isArray(entries) || entries.length === 0) return [];
   return entries.map(tourToRecord);
 }
 
@@ -149,11 +163,10 @@ export function tourListings(entries) {
  * the four-chip detail row; `detailChips` keeps that one, exactly as
  * `asTourDetail` does for a CMS record.
  *
- * This only runs on the fallback path. Without it a tour detail page reached
- * with no CMS entries had no `overview` to split and threw instead of falling
- * back, which is the one state where the fallback has to actually render.
+ * Kept for the data cleanup that follows, not called by the site: nothing
+ * renders from it now that the adapters no longer stand in for the CMS.
  */
-function hardcodedTours() {
+export function hardcodedTours() {
   return HIKES_ALL.map((hike) => {
     const detail = TOUR_DETAILS[hike.slug];
     if (!detail) return hike;
@@ -245,9 +258,9 @@ export function destinationToRecord(entry) {
   };
 }
 
-/** Strapi destinations as records, or the hardcoded list when there are none. */
+/** Strapi destinations as records. Empty in, empty out, for the same reason as tourListings. */
 export function destinationList(entries) {
-  if (!Array.isArray(entries) || entries.length === 0) return DESTINATIONS_ALL;
+  if (!Array.isArray(entries) || entries.length === 0) return [];
   return entries.map(destinationToRecord);
 }
 
@@ -328,12 +341,13 @@ function packGalleryColumns(items) {
 
 /**
  * The gallery-page single type as the object GalleryPage already renders:
- * { badge, title, sub, columns }. The page's markup is unchanged, and the
- * hand-written GALLERY stays the source of truth whenever the CMS has nothing
- * to offer.
+ * { badge, title, sub, columns }. The page's markup is unchanged.
  *
- * Returns null when the entry has no usable photo — the same "nothing to show,
- * keep the fallback" signal the other adapters use.
+ * Null when the entry is absent, or when it holds no usable photo — the caller
+ * renders that as its own error or empty state rather than quietly swapping in
+ * the hand-packed gallery. The three header fields still fall back individually
+ * when the editor left one blank, which is a field-level gap rather than a
+ * failed request.
  */
 export function galleryPageToRecord(entry) {
   const items = galleryItems(entry?.photos);

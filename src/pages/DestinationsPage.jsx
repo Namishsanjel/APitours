@@ -6,11 +6,14 @@ import { PAGES } from "../data/content.js";
 import { useStrapiDestinationsState, STRAPI_STATUS } from "../lib/strapiData.jsx";
 import { destinationList } from "../lib/catalog.js";
 import { DestinationsSkeleton } from "../components/skeletons.jsx";
+import { SectionError, SectionEmpty } from "../components/SectionError.jsx";
 
 export default function DestinationsPage() {
   const page = PAGES["/destinations"];
-  const { data: strapiDestinations, status } = useStrapiDestinationsState();
+  const { data: strapiDestinations, status, retry } = useStrapiDestinationsState();
   // Strapi's continent enumeration is mapped back to the labels the groups use.
+  // An errored or empty collection maps to an empty list, which is what the two
+  // explicit states below are for.
   const destinations = useMemo(() => destinationList(strapiDestinations), [strapiDestinations]);
 
   useEffect(() => {
@@ -26,10 +29,17 @@ export default function DestinationsPage() {
 
         {/* Loading: one skeleton group per continent, each holding the same number of
             380px cards the list will, so the page does not jump when the groups
-            arrive. On a failure or an empty collection the hardcoded list
-            below renders exactly as it always has. */}
+            arrive. Error: the whole page has no destinations to group, so the
+            error state stands in for the groups. Empty: one neutral line, for
+            the same reason. In both cases the hardcoded DESTINATIONS_ALL is not
+            rendered — the continent groups below would otherwise read as live
+            content. */}
         {status === STRAPI_STATUS.LOADING ? (
           <DestinationsSkeleton />
+        ) : status === STRAPI_STATUS.ERROR ? (
+          <SectionError onRetry={retry} />
+        ) : !destinations.length ? (
+          <SectionEmpty />
         ) : (
           DESTINATIONS_PAGE.groups.map((group) => {
             const list = destinations.filter((d) => d.continent === group);

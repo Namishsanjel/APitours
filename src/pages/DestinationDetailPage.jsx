@@ -15,6 +15,7 @@ import {
 import { tourListings, destinationBySlug } from "../lib/catalog.js";
 import { rememberDestination } from "../lib/prefill.js";
 import { DestinationDetailSkeleton, TourPackagesSkeleton } from "../components/skeletons.jsx";
+import { SectionError } from "../components/SectionError.jsx";
 
 function FactList({ title, items }) {
   return (
@@ -34,12 +35,12 @@ function FactList({ title, items }) {
 
 export default function DestinationDetailPage() {
   const slug = window.location.pathname.split("/").filter(Boolean).pop() ?? "";
-  const { data: strapiTours, status: toursStatus } = useStrapiToursState();
-  const { data: strapiDestinations, status: destinationsStatus } = useStrapiDestinationsState();
+  const { data: strapiTours, status: toursStatus, retry: retryTours } = useStrapiToursState();
+  const { data: strapiDestinations, status: destinationsStatus, retry: retryDestinations } =
+    useStrapiDestinationsState();
 
   const loading = destinationsStatus === STRAPI_STATUS.LOADING;
-  // the destination's own tours relation decides the list; the fallback
-  // destination record carries the old slug array
+  // the destination's own tours relation decides the list
   const dest = loading ? null : destinationBySlug(strapiDestinations, slug);
   const listings = useMemo(() => tourListings(strapiTours), [strapiTours]);
   // the "tour packages" block is a second, separate read of the tours
@@ -70,6 +71,22 @@ export default function DestinationDetailPage() {
     );
   }
 
+  /* The destinations collection failed, so nothing is known about this slug.
+     This used to fall through to <DestinationsPage />, which answered a failed
+     request by showing a different page — the visitor saw a full index of
+     destinations for a URL that names one of them. */
+  if (destinationsStatus === STRAPI_STATUS.ERROR) {
+    return (
+      <PageShell faq={false}>
+        <section className="page-sec container-x flex flex-col gap-6">
+          <SectionError onRetry={retryDestinations} />
+        </section>
+      </PageShell>
+    );
+  }
+
+  /* The request succeeded and this slug is not in it. The destinations index is
+     the closest true thing to offer, so it stays as the not-found route here. */
   if (!dest) return <DestinationsPage />;
 
   const tours = listings.filter((h) => dest.tours.includes(h.slug));
@@ -94,6 +111,11 @@ export default function DestinationDetailPage() {
 
         {toursLoading ? (
           <TourPackagesSkeleton />
+        ) : toursStatus === STRAPI_STATUS.ERROR ? (
+          /* this block is a second read of the tours collection, so it reports
+             its own failure and retries on its own; the rest of the page is
+             unaffected */
+          <SectionError onRetry={retryTours} />
         ) : tours.length ? (
           <div className="flex flex-col gap-6">
             <div className="flex items-baseline justify-between border-b border-smoke/30 pb-3">

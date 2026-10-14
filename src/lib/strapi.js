@@ -138,6 +138,32 @@ export function clearStrapiCache() {
 }
 
 /**
+ * Drops the cached response for one path, so the next reader of that exact path
+ * issues a fresh request instead of being handed the previous entry.
+ *
+ * This is what a "Try again" button reaches for. A failed request has already
+ * been deleted from the cache by the time it settles, so the case that actually
+ * needs forcing is a *successful* answer that is still inside its 60s TTL: the
+ * retry would otherwise be answered from the cache and appear to do nothing.
+ *
+ * Called with no path (or a blank one) it clears everything, the same as
+ * clearStrapiCache().
+ *
+ * Safe against a request that is still in flight: the entry's own settle
+ * handlers compare themselves against `cache.get(key)` by identity, so a late
+ * answer from a superseded request can neither revive the dropped entry nor
+ * evict the replacement put there by the retry.
+ */
+export function invalidateStrapi(path) {
+  const key = String(path ?? "").trim();
+  if (!key) {
+    cache.clear();
+    return;
+  }
+  cache.delete(key);
+}
+
+/**
  * Strapi media `url`s come back relative ("/uploads/x.jpg"). Absolute URLs are
  * already usable as-is, so only the relative ones get the origin prefixed.
  * Returns null for anything missing, so callers can simply skip the image.

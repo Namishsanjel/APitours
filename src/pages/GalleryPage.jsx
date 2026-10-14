@@ -5,21 +5,23 @@ import Footer from "../components/Footer.jsx";
 import { Eyebrow, Words } from "../components/ui.jsx";
 import { Reveal } from "../anim.jsx";
 import { stagger } from "../motion.js";
-import { GALLERY } from "../data/pages.js";
 import { PAGES } from "../data/content.js";
-import { GALLERY_PATH, useStrapiList, hasContent, STRAPI_STATUS } from "../lib/strapiData.jsx";
+import { GALLERY_PATH, useStrapiList, STRAPI_STATUS } from "../lib/strapiData.jsx";
 import { galleryPageToRecord } from "../lib/catalog.js";
 import { GallerySkeleton } from "../components/skeletons.jsx";
+import { SectionError, SectionEmpty } from "../components/SectionError.jsx";
 
 export default function GalleryPage() {
   const page = PAGES["/gallery"];
 
-  // The CMS gallery, in the same shape the hardcoded GALLERY already has. While
-  // the request is in flight a three-column skeleton stands in; on a failure, or
-  // when the entry holds no photos, this is null and the hardcoded module below
-  // is used instead.
-  const { items, status } = useStrapiList(GALLERY_PATH);
-  const gallery = galleryPageToRecord(hasContent(items) ? items[0] : null) ?? GALLERY;
+  /* The CMS gallery, in the same shape the page already renders. While the
+     request is in flight a three-column skeleton stands in. On a failure, or
+     when the entry holds no photos, this is null and the page renders its error
+     or empty state — the hand-packed GALLERY module is no longer substituted
+     here, since every one of its photos is hardcoded copy standing in for a
+     collection we did not manage to read. */
+  const { items, status, retry } = useStrapiList(GALLERY_PATH);
+  const gallery = galleryPageToRecord(Array.isArray(items) ? items[0] : null);
 
   useEffect(() => {
     document.title = page.title;
@@ -37,6 +39,12 @@ export default function GalleryPage() {
               it waits with the photos rather than showing the hardcoded copy */}
           {status === STRAPI_STATUS.LOADING ? (
             <GallerySkeleton />
+          ) : status === STRAPI_STATUS.ERROR ? (
+            /* with no CMS header either, the page's own h1 would be a claim the
+               CMS never made, so the whole block is the error state */
+            <SectionError onRetry={retry} />
+          ) : !gallery ? (
+            <SectionEmpty />
           ) : (
             <>
               <div className="flex flex-col items-start gap-4 min-[900px]:flex-row min-[900px]:items-end min-[900px]:justify-between min-[900px]:gap-8">

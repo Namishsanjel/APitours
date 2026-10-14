@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { NAV_LINKS, IMG } from "../data/content.js";
+import { NAV_LINKS } from "../data/content.js";
 import { DESTINATIONS_PAGE } from "../data/newPages.js";
 import { HIKES_PAGE } from "../data/hikes.js";
 import { ImgBlur } from "./ui.jsx";
@@ -14,33 +14,36 @@ import {
 import { tourListings, destinationList } from "../lib/catalog.js";
 import { NavMenuSkeleton, LogoSkeleton } from "./skeletons.jsx";
 import { Skeleton, SkeletonRegion } from "./Skeleton.jsx";
+import { SectionErrorInline, SectionEmptyInline } from "./SectionError.jsx";
 
-/** Tours as the listing records, from Strapi when it has any, else the data file. */
+/**
+ * Tours as the listing records.
+ *
+ * `listings` is empty whenever the collection is errored or empty, and the
+ * status comes back with it so each menu can say which of the two it is rather
+ * than rendering an empty panel.
+ */
 function useTourListings() {
-  const { data, status } = useStrapiToursState();
+  const { data, status, retry } = useStrapiToursState();
   const listings = useMemo(() => tourListings(data), [data]);
-  return { listings, loading: status === STRAPI_STATUS.LOADING };
+  return { listings, status, retry };
 }
 
 /**
- * Destinations as the records the menus read, from Strapi when it has any, else
- * the hardcoded list in newPages.js.
+ * Destinations as the records the menus read, sorted on `order`.
  *
  * The same provider and the same `destinationList` adapter DestinationsPage
  * uses, so the bar and the page share one cached request — the destinations
  * collection is fetched once in StrapiProvider, never once per mount.
  */
 function useDestinations() {
-  const { data, status } = useStrapiDestinationsState();
+  const { data, status, retry } = useStrapiDestinationsState();
   const destinations = useMemo(() => {
-    // sorted on `order`, which Strapi returns as a number. The hardcoded
-    // fallback has no order field, so its entries all tie and a stable sort
-    // leaves them exactly where newPages.js put them.
     return [...destinationList(data)].sort(
       (a, b) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER),
     );
   }, [data]);
-  return { destinations, loading: status === STRAPI_STATUS.LOADING };
+  return { destinations, status, retry };
 }
 
 /** The 11x7 chevron the booking form's select already uses, pointed down. */
@@ -118,7 +121,7 @@ function DestinationPreview({ dest }) {
  * "South America" here — so the grouping below is unchanged code.
  */
 function DestinationsMenu({ onNavigate }) {
-  const { destinations, loading } = useDestinations();
+  const { destinations, status, retry } = useDestinations();
   const [active, setActive] = useState(() => destinations[0]?.slug ?? null);
   const groups = DESTINATIONS_PAGE.groups
     .map((group) => destinations.filter((d) => d.continent === group))
@@ -131,7 +134,7 @@ function DestinationsMenu({ onNavigate }) {
   // are both read off the collection, so both are held. The hovered
   // destination's card has nothing to show yet and is left out rather than
   // filled with a placeholder photo.
-  if (loading) {
+  if (status === STRAPI_STATUS.LOADING) {
     return (
       <div id="nav-destinations-menu" className="absolute inset-x-0 top-full hidden min-[1024px]:block">
         <NavMenuSkeleton
@@ -143,6 +146,34 @@ function DestinationsMenu({ onNavigate }) {
           ctaHref="/tours"
           onNavigate={onNavigate}
         />
+      </div>
+    );
+  }
+
+  /* A failed request, or a collection with nothing published: the panel says so
+     where its rows would have been and keeps every static link below, so the
+     rest of the bar still works. The count line is dropped in both cases — it
+     is read off a collection we do not have, and "0 destinations" would be a
+     different lie. */
+  if (status === STRAPI_STATUS.ERROR || status === STRAPI_STATUS.EMPTY) {
+    return (
+      <div id="nav-destinations-menu" className="absolute inset-x-0 top-full hidden min-[1024px]:block">
+        <div className="menu-in flex max-h-[calc(100dvh-92px)] flex-col gap-2 overflow-y-auto overscroll-contain rounded-b-lg bg-cream p-6">
+          {status === STRAPI_STATUS.ERROR ? (
+            <SectionErrorInline onRetry={retry} />
+          ) : (
+            <SectionEmptyInline />
+          )}
+
+          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-ink/10 pt-5">
+            <a href="/destinations" onClick={onNavigate} className="t-link text-ink underline underline-offset-4">
+              All destinations
+            </a>
+            <a href="/tours" onClick={onNavigate} className="btn btn-dark w-[150px]">
+              Browse all tours
+            </a>
+          </div>
+        </div>
       </div>
     );
   }
@@ -240,14 +271,18 @@ function PackagePreview({ pkg }) {
  * tour's card filling the right, and the closing banner underneath.
  */
 function PackagesMenu({ onNavigate }) {
-  const { listings: tours, loading } = useTourListings();
-  const [active, setActive] = useState(() => tours[0].slug);
+  const { listings: tours, status, retry } = useTourListings();
+  const [active, setActive] = useState(() => tours[0]?.slug ?? null);
   const groups = DIFFICULTIES.map((level) => tours.filter((p) => p.chips[0] === level)).filter(
     (list) => list.length
   );
-  const current = tours.find((p) => p.slug === active) ?? tours[0];
+  // The list can legitimately be empty now that it no longer falls back to the
+  // data file, so `current` is nullable and the preview below is skipped rather
+  // than reached through tours[0].
+  const current = tours.find((p) => p.slug === active) ?? tours[0] ?? null;
+  const currentSlug = current?.slug ?? null;
 
-  if (loading) {
+  if (status === STRAPI_STATUS.LOADING) {
     return (
       <div id="nav-packages-menu" className="absolute inset-x-0 top-full hidden min-[1024px]:block">
         <NavMenuSkeleton
@@ -259,6 +294,32 @@ function PackagesMenu({ onNavigate }) {
           ctaHref="/plan-your-trip"
           onNavigate={onNavigate}
         />
+      </div>
+    );
+  }
+
+  /* Same shape as the destinations panel: the message replaces the rows, and
+     the static links and the CTA below it stay live so the bar is still
+     navigable. */
+  if (status === STRAPI_STATUS.ERROR || status === STRAPI_STATUS.EMPTY) {
+    return (
+      <div id="nav-packages-menu" className="absolute inset-x-0 top-full hidden min-[1024px]:block">
+        <div className="menu-in flex max-h-[calc(100dvh-92px)] flex-col gap-2 overflow-y-auto overscroll-contain rounded-b-lg bg-cream p-6">
+          {status === STRAPI_STATUS.ERROR ? (
+            <SectionErrorInline onRetry={retry} />
+          ) : (
+            <SectionEmptyInline />
+          )}
+
+          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-ink/10 pt-5">
+            <a href="/tours" onClick={onNavigate} className="t-link text-ink underline underline-offset-4">
+              All packages
+            </a>
+            <a href="/plan-your-trip" onClick={onNavigate} className="btn btn-dark w-[150px]">
+              Plan your trip
+            </a>
+          </div>
+        </div>
       </div>
     );
   }
@@ -275,12 +336,12 @@ function PackagesMenu({ onNavigate }) {
                 onClick={onNavigate}
                 onMouseEnter={() => setActive(p.slug)}
                 onFocus={() => setActive(p.slug)}
-                aria-current={p.slug === current.slug ? "true" : undefined}
+                aria-current={p.slug === currentSlug ? "true" : undefined}
                 className={`flex flex-1 items-center justify-between gap-3 rounded-lg px-3 transition-colors ${
-                  p.slug === current.slug ? "bg-mist" : "hover:bg-mist"
+                  p.slug === currentSlug ? "bg-mist" : "hover:bg-mist"
                 }`}
               >
-                <span className={`t-h6 min-w-0 truncate ${p.slug === current.slug ? "text-primary" : "text-ink"}`}>
+                <span className={`t-h6 min-w-0 truncate ${p.slug === currentSlug ? "text-primary" : "text-ink"}`}>
                   {p.title}
                 </span>
                 <span className="t-eyebrow-s shrink-0 text-smoke">{p.chips[1]}</span>
@@ -288,7 +349,7 @@ function PackagesMenu({ onNavigate }) {
             ))}
           </nav>
 
-          <PackagePreview pkg={current} />
+          {current ? <PackagePreview pkg={current} /> : null}
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-4 border-t border-ink/10 pt-5">
@@ -321,8 +382,8 @@ const MENUS = {
  * nothing in the nav is unreachable on a phone or tablet.
  */
 function MobileMenu({ open, onNavigate }) {
-  const { listings: tours, loading: toursLoading } = useTourListings();
-  const { destinations, loading: destinationsLoading } = useDestinations();
+  const { listings: tours, status: toursStatus, retry: retryTours } = useTourListings();
+  const { destinations, status: destinationsStatus, retry: retryDestinations } = useDestinations();
   const [group, setGroup] = useState(null);
 
   if (!open) return null;
@@ -334,7 +395,9 @@ function MobileMenu({ open, onNavigate }) {
           {NAV_LINKS.map((l) => {
             const isGroup = Boolean(l.menu && MENUS[l.menu]);
             const expanded = isGroup && group === l.menu;
-            const loading = l.menu === "destinations" ? destinationsLoading : toursLoading;
+            const status = l.menu === "destinations" ? destinationsStatus : toursStatus;
+            const retry = l.menu === "destinations" ? retryDestinations : retryTours;
+            const loading = status === STRAPI_STATUS.LOADING;
 
             if (!isGroup) {
               return (
@@ -374,6 +437,12 @@ function MobileMenu({ open, onNavigate }) {
                         </div>
                       ))}
                     </SkeletonRegion>
+                  ) : status === STRAPI_STATUS.ERROR ? (
+                    /* the accordion's own message; every other row of the drawer,
+                       and the links at its foot, stay exactly as they are */
+                    <SectionErrorInline onRetry={retry} className="w-full" />
+                  ) : status === STRAPI_STATUS.EMPTY ? (
+                    <SectionEmptyInline className="w-full" />
                   ) : (
                     <ul className="flex flex-col gap-1 pb-4">
                       {list.map((d) => (
@@ -451,20 +520,21 @@ export default function Navbar({ variant = "light" }) {
   // bar needs one that reads over a photo and one that reads on cream:
   //   global.logo     -> transparent bar sitting over the hero photo
   //   global.logoDark -> the bar turned solid (cream panel / page background)
-  // A site that only fills one still works: the other falls back to it, and
-  // with neither published the original file pair in content.js does.
   //
   // While that entry is in flight the logo is a neutral block of exactly the
   // image's box. The site's text name stays in the link's label throughout, so
   // the bar is never an empty gap — only a bar whose logo has not arrived.
+  //
+  // On an error or an empty global entry there is no logo to show and no hardcoded
+  // one to borrow: the site's text name is rendered in the image's own box
+  // instead, which is the same degradation the footer makes. The rest of the bar
+  // is untouched either way.
   const { data: global, status: globalStatus } = useGlobalState();
   const logoLoading = globalStatus === STRAPI_STATUS.LOADING;
   const siteName = global?.siteName || "API Touch";
   const photoLogo = imageOf(global?.logo, siteName);
   const panelLogo = imageOf(global?.logoDark, siteName) ?? photoLogo;
-  const logo = solid
-    ? panelLogo?.src || IMG.logoDark
-    : photoLogo?.src || IMG.logo;
+  const logo = solid ? panelLogo?.src ?? null : photoLogo?.src ?? null;
   const link = solid ? "text-ink hover:text-primary" : "text-mist hover:text-sage";
 
   const close = () => setOpenMenu(null);
@@ -536,12 +606,17 @@ export default function Navbar({ variant = "light" }) {
         <a href="/" aria-label={siteName} className="shrink-0">
           {logoLoading ? (
             <LogoSkeleton />
-          ) : (
+          ) : logo ? (
             <img
               src={logo}
               alt={siteName}
               className="block h-[42px] w-[84px] object-contain max-[1023.98px]:h-[36px] max-[1023.98px]:w-[72px]"
             />
+          ) : (
+            /* no logo image available: the name stands in, in the same box */
+            <span className="block h-[42px] w-[84px] leading-[42px] max-[1023.98px]:h-[36px] max-[1023.98px]:w-[72px] max-[1023.98px]:leading-[36px]">
+              <span className={`t-h4 truncate ${link}`}>{siteName}</span>
+            </span>
           )}
         </a>
         <div className="ml-auto hidden items-center gap-6 min-[1024px]:flex">
