@@ -1,0 +1,177 @@
+import { useEffect, useState } from "react";
+import { useSectionReveal } from "./motion.js";
+import Home from "./pages/Home.jsx";
+import HikesPage from "./pages/HikesPage.jsx";
+import TourDetailPage from "./pages/TourDetailPage.jsx";
+import DestinationsPage from "./pages/DestinationsPage.jsx";
+import DestinationDetailPage from "./pages/DestinationDetailPage.jsx";
+import ExperiencesPage from "./pages/ExperiencesPage.jsx";
+import ServicesPage from "./pages/ServicesPage.jsx";
+import ServiceDetailPage from "./pages/ServiceDetailPage.jsx";
+import PlanTripPage from "./pages/PlanTripPage.jsx";
+import AboutPage from "./pages/AboutPage.jsx";
+import WhyPage from "./pages/WhyPage.jsx";
+import GalleryPage from "./pages/GalleryPage.jsx";
+import ReviewsPage from "./pages/ReviewsPage.jsx";
+import JournalPage from "./pages/JournalPage.jsx";
+import BlogDetailPage from "./pages/BlogDetailPage.jsx";
+import ContactPage from "./pages/ContactPage.jsx";
+import FaqPage from "./pages/FaqPage.jsx";
+import { TermsPage, PrivacyPage, CancellationPage } from "./pages/LegalPage.jsx";
+import LegalDocsPage from "./pages/LegalDocsPage.jsx";
+import JsonLd from "./components/JsonLd.jsx";
+import { organizationJsonLd, webSiteJsonLd } from "./lib/jsonld.js";
+import { useCanonical } from "./lib/seo.js";
+import { StrapiProvider } from "./lib/strapiData.jsx";
+import { LocationProvider } from "./lib/location.jsx";
+
+/** "/tours.html" | "/tours/" | "/tours"  ->  "/tours" */
+function normalize(path) {
+  let p = path.replace(/\/index\.html$/, "/").replace(/\.html$/, "");
+  if (p.length > 1 && p.endsWith("/")) p = p.slice(0, -1);
+  return p || "/";
+}
+
+/** The two renamed sections keep working at their old URLs. */
+const ALIASES = [
+  [/^\/hikes(\/|$)/, "/tours$1"],
+  [/^\/journal(\/|$)/, "/blog$1"],
+];
+
+/** Tour slugs that were renamed when the site moved to tours/vacations wording.
+ *  The old URLs still resolve: each one is rewritten to its new slug. */
+const SLUG_ALIASES = [
+  ["/tours/inca-trail-to-machu-picchu", "/tours/inca-tour-machu-picchu"],
+  ["/tours/cinque-terre-coastal-trail", "/tours/cinque-terre-coast"],
+  ["/tours/black-forest-ridge-trail", "/tours/black-forest-ridge"],
+  ["/tours/laugavegur-trail", "/tours/laugavegur"],
+];
+
+function resolve(path) {
+  let p = normalize(path);
+  for (const [re, to] of ALIASES) if (re.test(p)) p = p.replace(re, to);
+  for (const [from, to] of SLUG_ALIASES) if (p === from) p = to;
+  return p;
+}
+
+const ROUTES = [
+  { path: "/", Page: Home },
+  { path: "/tours", Page: HikesPage },
+  { path: "/tours/:slug", Page: TourDetailPage },
+  { path: "/destinations", Page: DestinationsPage },
+  { path: "/destinations/:slug", Page: DestinationDetailPage },
+  { path: "/experiences", Page: ExperiencesPage },
+  { path: "/services", Page: ServicesPage },
+  { path: "/services/:slug", Page: ServiceDetailPage },
+  { path: "/plan-your-trip", Page: PlanTripPage },
+  { path: "/about", Page: AboutPage },
+  { path: "/why-apitouch", Page: WhyPage },
+  { path: "/gallery", Page: GalleryPage },
+  { path: "/reviews", Page: ReviewsPage },
+  { path: "/blog", Page: JournalPage },
+  { path: "/blog/:slug", Page: BlogDetailPage },
+  { path: "/contact", Page: ContactPage },
+  { path: "/faq", Page: FaqPage },
+  { path: "/legal", Page: LegalDocsPage },
+  { path: "/terms-of-service", Page: TermsPage },
+  { path: "/privacy-policy", Page: PrivacyPage },
+  { path: "/cancellation-refund", Page: CancellationPage },
+];
+
+function match(path) {
+  const parts = path.split("/").filter(Boolean);
+  for (const route of ROUTES) {
+    const rp = route.path.split("/").filter(Boolean);
+    if (rp.length !== parts.length) continue;
+    const ok = rp.every((seg, i) => seg.startsWith(":") || seg === parts[i]);
+    if (ok) return route;
+  }
+  return null;
+}
+
+export default function App() {
+  const [path, setPath] = useState(() => {
+    const p = resolve(window.location.pathname);
+    if (p !== normalize(window.location.pathname)) {
+      window.history.replaceState({}, "", p + window.location.search + window.location.hash);
+    }
+    return p;
+  });
+
+  // The query string is tracked separately from the route, because it never
+  // affects which page renders — it is read by the two forms that prefill
+  // themselves from it (/contact?tour=…, /plan-your-trip?destination=…).
+  // Held as state so a client-side navigation to the *same* route with a
+  // different query (/contact -> /contact?tour=X) still reaches the form:
+  // setPath alone would bail out on an unchanged path and never re-render.
+  const [search, setSearch] = useState(() => window.location.search);
+
+  useEffect(() => {
+    const onPop = () => {
+      setPath(resolve(window.location.pathname));
+      setSearch(window.location.search);
+    };
+
+    const onClick = (e) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = e.target.closest?.("a");
+      if (!a || a.target === "_blank" || a.hasAttribute("download")) return;
+      const href = a.getAttribute("href");
+      if (!href || href.startsWith("#")) return;
+      const url = new URL(a.href, window.location.origin);
+      if (url.origin !== window.location.origin) return;
+      e.preventDefault();
+      if (url.pathname !== window.location.pathname || url.search !== window.location.search) {
+        // push the resolved path, not the raw one: a legacy alias must not stay
+        // in the address bar while the page underneath is already the new slug,
+        // or anything reading window.location sees the old one
+        window.history.pushState({}, "", resolve(url.pathname) + url.search + url.hash);
+        setPath(resolve(url.pathname));
+        setSearch(url.search);
+        if (url.hash) {
+          // wait for the new page to render, then jump to the section
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              document.querySelector(url.hash)?.scrollIntoView();
+            });
+          });
+        } else {
+          window.scrollTo(0, 0);
+        }
+      } else if (url.hash) {
+        document.querySelector(url.hash)?.scrollIntoView();
+      }
+    };
+
+    window.addEventListener("popstate", onPop);
+    document.addEventListener("click", onClick);
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      document.removeEventListener("click", onClick);
+    };
+  }, []);
+
+  const route = match(path);
+  const Page = route?.Page ?? Home;
+
+  // Section-by-section scroll reveals, re-armed on every route change.
+  useSectionReveal(path);
+
+  // One absolute self-referencing canonical per route (rewrites the link
+  // element in place, so a route change can never leave a second one behind).
+  useCanonical(path);
+
+  return (
+    // StrapiProvider fetches /api/global once for the whole app so the header
+    // and footer can read the site name, logo and contact details from it.
+    <StrapiProvider>
+      <LocationProvider search={search}>
+        <div className="relative min-h-screen bg-cream text-ink">
+          <JsonLd id="jsonld-organization" data={organizationJsonLd()} />
+          <JsonLd id="jsonld-website" data={webSiteJsonLd()} />
+          <Page />
+        </div>
+      </LocationProvider>
+    </StrapiProvider>
+  );
+}

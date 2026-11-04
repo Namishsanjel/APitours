@@ -1,0 +1,152 @@
+import { useEffect, useMemo } from "react";
+import PageShell from "../components/PageShell.jsx";
+import { PageHeader } from "../components/ui.jsx";
+import TourCard from "../components/TourCard.jsx";
+import Blocks from "../components/Blocks.jsx";
+import DestinationsPage from "./DestinationsPage.jsx";
+import JsonLd from "../components/JsonLd.jsx";
+import { breadcrumbJsonLd, destinationBreadcrumbs } from "../lib/jsonld.js";
+import { usePageMeta } from "../lib/seo.js";
+import {
+  useStrapiToursState,
+  useStrapiDestinationsState,
+  STRAPI_STATUS,
+} from "../lib/strapiData.jsx";
+import { tourListings, destinationBySlug } from "../lib/catalog.js";
+import { rememberDestination } from "../lib/prefill.js";
+import { DestinationDetailSkeleton, TourPackagesSkeleton } from "../components/skeletons.jsx";
+import { SectionError } from "../components/SectionError.jsx";
+
+function FactList({ title, items }) {
+  return (
+    <div className="flex flex-1 flex-col gap-4">
+      <h2 className="t-h4 text-ink">{title}</h2>
+      <ul className="flex flex-col gap-2">
+        {items.map((i) => (
+          <li key={i} className="flex items-start gap-2">
+            <span className="mt-[9px] h-[5px] w-[5px] shrink-0 rounded-full bg-primary" />
+            <span className="t-body">{i}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default function DestinationDetailPage() {
+  const slug = window.location.pathname.split("/").filter(Boolean).pop() ?? "";
+  const { data: strapiTours, status: toursStatus, retry: retryTours } = useStrapiToursState();
+  const { data: strapiDestinations, status: destinationsStatus, retry: retryDestinations } =
+    useStrapiDestinationsState();
+
+  const loading = destinationsStatus === STRAPI_STATUS.LOADING;
+  // the destination's own tours relation decides the list
+  const dest = loading ? null : destinationBySlug(strapiDestinations, slug);
+  const listings = useMemo(() => tourListings(strapiTours), [strapiTours]);
+  // the "tour packages" block is a second, separate read of the tours
+  // collection, so it holds its own skeleton rather than holding the page
+  const toursLoading = toursStatus === STRAPI_STATUS.LOADING;
+
+  // Remember this destination by name for the plan-your-trip form, so a visitor
+  // who browses destinations and then plans a trip starts from the one they
+  // were reading. The adapter record carries the name from either source.
+  useEffect(() => {
+    if (dest?.name) rememberDestination(dest.name);
+  }, [dest]);
+
+  usePageMeta({
+    title: `${dest ? dest.name : "Destination"} — API Touch`,
+    description: dest ? dest.body : null,
+  });
+
+  // Loading: the header, the banner, the three fact lists and the closing call
+  // to action (whose heading carries this destination's name) are all held at
+  // their loaded sizes. Whether the slug will even resolve is not known yet, so
+  // this runs before the lookup below decides there is nothing to show.
+  if (loading) {
+    return (
+      <PageShell faq={false}>
+        <DestinationDetailSkeleton />
+      </PageShell>
+    );
+  }
+
+  /* The destinations collection failed, so nothing is known about this slug.
+     This used to fall through to <DestinationsPage />, which answered a failed
+     request by showing a different page — the visitor saw a full index of
+     destinations for a URL that names one of them. */
+  if (destinationsStatus === STRAPI_STATUS.ERROR) {
+    return (
+      <PageShell faq={false}>
+        <section className="page-sec container-x flex flex-col gap-6">
+          <SectionError onRetry={retryDestinations} />
+        </section>
+      </PageShell>
+    );
+  }
+
+  /* The request succeeded and this slug is not in it. The destinations index is
+     the closest true thing to offer, so it stays as the not-found route here. */
+  if (!dest) return <DestinationsPage />;
+
+  const tours = listings.filter((h) => dest.tours.includes(h.slug));
+  const breadcrumbSchema = breadcrumbJsonLd(destinationBreadcrumbs(dest.name, dest.slug));
+
+  return (
+    <PageShell>
+      <JsonLd id="jsonld-breadcrumb-destination" data={breadcrumbSchema} />
+      <section className="container-x flex flex-col gap-6 pt-[120px] max-[1099.98px]:pt-[100px] max-[639.98px]:pt-[88px]">
+        <PageHeader badge={dest.region} title={dest.name} sub={dest.body} />
+        <img src={dest.image} alt={dest.alt} className="h-[240px] w-full rounded-lg object-cover min-[639.98px]:h-[320px] min-[1100px]:h-[420px]" />
+        {/* the CMS description is a blocks field; the hardcoded one is plain text */}
+        {Array.isArray(dest.description) ? <Blocks content={dest.description} /> : null}
+      </section>
+
+      <section className="container-x flex flex-col gap-8 pb-[60px] pt-10 min-[639.98px]:gap-12 min-[639.98px]:pt-12">
+        <div className="flex flex-col gap-8 min-[900px]:flex-row min-[900px]:gap-12">
+          <FactList title="Attractions" items={dest.attractions} />
+          <FactList title="Activities" items={dest.activities} />
+          <FactList title="Best time to visit" items={dest.bestTime} />
+        </div>
+
+        {toursLoading ? (
+          <TourPackagesSkeleton />
+        ) : toursStatus === STRAPI_STATUS.ERROR ? (
+          /* this block is a second read of the tours collection, so it reports
+             its own failure and retries on its own; the rest of the page is
+             unaffected */
+          <SectionError onRetry={retryTours} />
+        ) : tours.length ? (
+          <div className="flex flex-col gap-6">
+            <div className="flex items-baseline justify-between border-b border-smoke/30 pb-3">
+              <h2 className="t-h3s text-ink">Tour packages</h2>
+              <a href="/tours" className="t-link text-smoke">
+                All tours
+              </a>
+            </div>
+            <div className="grid grid-cols-1 gap-6 min-[639.98px]:grid-cols-2 min-[1100px]:grid-cols-2">
+              {tours.map((t, i) => (
+                <TourCard key={t.slug} tour={t} index={i} />
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        <div className="flex flex-col items-start gap-4 rounded-lg bg-mist p-6 min-[900px]:flex-row min-[900px]:items-center min-[900px]:justify-between min-[900px]:gap-6">
+          <div className="flex min-w-0 flex-col gap-1">
+            <p className="t-h4 text-ink">Want {dest.name} built around you?</p>
+            <p className="t-body">Tell us your dates and group size — we come back with a route and a price.</p>
+          </div>
+          {/* To the plan-your-trip form with this destination's name already in
+              the field, encoded because names carry spaces and accents. */}
+          <a
+            href={`/plan-your-trip?destination=${encodeURIComponent(dest.name)}`}
+            className="btn btn-dark w-[160px]"
+          >
+            Plan your trip
+          </a>
+        </div>
+      </section>
+    </PageShell>
+  );
+}
